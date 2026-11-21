@@ -1,28 +1,28 @@
+import { useMemo, useState } from 'react';
 import * as A from '../../astro';
-import { SCHOOL_NAMES, type Level } from '../../content/schema';
+import { SCHOOL_NAMES } from '../../content/schema';
+import { dayPlan, lifeAreas } from '../../synthesis/life';
+import { dayAreas } from '../../synthesis/areas';
 import { addDays, type DateKey } from '../../astro/time';
 import { humanDate, humanDateTime } from '../format';
 import { useDay } from '../hooks';
 import { useStore } from '../store';
-import { Card, Chip, Disclosure, Label, List, Moon, SchoolNote, ToneDot } from '../ui';
-import { EnergyCardView } from './EnergyCard';
+import { Card, Disclosure, Label, List, SchoolNote, ToneDot } from '../ui';
+import { WhySheet } from './EnergyCard';
+import { AreasCard, LifeCard, MoonHero, ord, PersonalCard, PlanCard, QuestionCard, TimeCard } from './DayParts';
 import type { Nav } from '../App';
 
-const LEVEL: Record<Level, string> = { high: 'высокое', medium: 'среднее', low: 'низкое' };
-
-function Meta({ school, consensus, confidence, needsReview }: { school: keyof typeof SCHOOL_NAMES; consensus: Level; confidence: Level; needsReview: boolean }) {
-  return (
-    <SchoolNote>
-      {SCHOOL_NAMES[school]} · согласие школ: {LEVEL[consensus]} · уверенность: {LEVEL[confidence]}
-      {needsReview && ' · ждёт ревизии'}
-    </SchoolNote>
-  );
+/** Подпись источника: только школа, без служебных пометок. */
+function Meta({ school }: { school: keyof typeof SCHOOL_NAMES }) {
+  return <SchoolNote>Источник: {SCHOOL_NAMES[school]}.</SchoolNote>;
 }
 
 export function DayScreen({ date, nav }: { date: DateKey; nav: Nav }) {
   const { location, content, settings } = useStore();
   const data = useDay(date);
-  if (!location || !data) return null;
+  const [why, setWhy] = useState(false);
+  const extra = useMemo(() => (data ? { plan: dayPlan(data.model, data.card, content), areas: lifeAreas(data.model), verdicts: dayAreas(data.model) } : null), [data, content]);
+  if (!location || !data || !extra) return null;
   const { model, card } = data;
   const tz = location.timeZone;
   const t = (d: Date) => A.formatTime(d, tz);
@@ -45,22 +45,19 @@ export function DayScreen({ date, nav }: { date: DateKey; nav: Nav }) {
         </button>
       </header>
 
-      <div className="flex items-center gap-5 px-1">
-        <Moon angle={model.phase.angle} size={92} animate={false} southern={location.latitude < 0} />
-        <div className="space-y-1 text-[14px]">
-          <div>{A.describeLunarDays(model.lunarDays, tz)}</div>
-          <div className="text-muted">
-            {A.PHASE_NAMES[model.phase.phase]}, {Math.round(model.phase.illuminationPct)}%
-          </div>
-          <div className="text-muted">Луна {A.inSign(model.dominantSign)}</div>
-          <div className="text-faint">
-            {model.riseSet.map((e) => `${e.kind === 'rise' ? 'восход' : 'заход'} ${t(e.time)}`).join(' · ') || 'восхода и захода нет'}
-          </div>
-        </div>
-      </div>
+      <MoonHero model={model} sign={model.dominantSign} number={model.dominant.number} until={card.base.next !== null ? card.base.changesAt : null} next={card.base.next} />
+      {card.base.prev !== null && card.base.changesAt && (
+        <p className="-mt-1 text-[14px] text-faint">До {t(card.base.changesAt)} ещё идёт {ord(card.base.prev)} лунный день.</p>
+      )}
 
-      <EnergyCardView card={card} model={model} />
+      <PlanCard plan={extra.plan} onWhy={() => setWhy(true)} personal={card.personal} />
+      <TimeCard model={model} />
+      <AreasCard areas={extra.verdicts} lunarDay={model.dominant.number} prev={card.base.prev} changesAt={card.base.prev !== null ? card.base.changesAt : null} tz={location.timeZone} />
+      <LifeCard areas={extra.areas} sign={model.dominantSign} />
+      <PersonalCard model={model} content={content} />
+      <QuestionCard plan={extra.plan} onWrite={() => nav.push({ name: 'entry', date })} />
 
+      <h2 className="px-1 pt-2 text-[17px] font-semibold">Подробнее</h2>
       <Card className="!py-1">
         {model.lunarDays.map((s) => {
           const e = content.lunarDay(s.day.number);
@@ -68,18 +65,18 @@ export function DayScreen({ date, nav }: { date: DateKey; nav: Nav }) {
             <Disclosure
               key={`${s.day.number}-${s.day.start.getTime()}`}
               defaultOpen={s.day.number === model.dominant.number && s.day.start.getTime() === model.dominant.start.getTime()}
-              title={<span>{s.day.number}-е лунные сутки</span>}
+              title={<span>{ord(s.day.number)} лунный день</span>}
               badge={<ToneDot tone={e.energy.tone} />}
-              subtitle={`${s.startsToday ? t(s.from) : 'с вчера'} – ${s.endsToday ? t(s.to) : 'дальше'} · ${e.symbols.join(', ')}`}
+              subtitle={`${s.startsToday ? t(s.from) : 'со вчера'} – ${s.endsToday ? t(s.to) : 'до завтра'} · символ: ${e.symbols[0]}`}
             >
               <p className="text-[15px] leading-6">{e.essence}</p>
               <div className="mt-4 grid gap-4">
                 <div>
-                  <Label className="mb-2">Время для</Label>
+                  <Label className="mb-2">Хорошо</Label>
                   <List items={e.favorable} />
                 </div>
                 <div>
-                  <Label className="mb-2">Чему уделить внимание</Label>
+                  <Label className="mb-2">Осторожно</Label>
                   <List items={e.mindful} />
                 </div>
                 <div>
@@ -87,33 +84,24 @@ export function DayScreen({ date, nav }: { date: DateKey; nav: Nav }) {
                   <p className="text-[15px] leading-6">{e.practice}</p>
                 </div>
                 <div>
-                  <Label className="mb-1">Вопрос для дневника</Label>
+                  <Label className="mb-1">Вопрос себе</Label>
                   <p className="text-[15px] italic leading-6 text-silver">{e.reflection}</p>
                 </div>
-                {e.bySchool.length > 0 && (
-                  <div className="space-y-1">
-                    {e.bySchool.map((b) => (
-                      <p key={b.note} className="text-[13px] leading-5 text-muted">
-                        <span className="text-ink">{SCHOOL_NAMES[b.school]}:</span> {b.note}
-                      </p>
-                    ))}
-                  </div>
-                )}
               </div>
               <Meta {...e} />
             </Disclosure>
           );
         })}
 
-        <Disclosure title={`Фаза: ${ph.name}`} subtitle={model.phase.waxing ? 'растущая Луна' : 'убывающая Луна'}>
+        <Disclosure title={`Фаза Луны: ${ph.name.toLowerCase()}`} subtitle={`Луна ${model.phase.waxing ? 'растёт' : 'убывает'}, освещена на ${Math.round(model.phase.illuminationPct)}%${model.riseSet.length ? ' · ' + model.riseSet.map((e) => `${e.kind === 'rise' ? 'восход' : 'заход'} ${t(e.time)}`).join(', ') : ''}`}>
           <p className="text-[15px] leading-6">{ph.essence}</p>
           <div className="mt-4 grid gap-4">
             <div>
-              <Label className="mb-2">Время для</Label>
+              <Label className="mb-2">Хорошо</Label>
               <List items={ph.favorable} />
             </div>
             <div>
-              <Label className="mb-2">Чему уделить внимание</Label>
+              <Label className="mb-2">Осторожно</Label>
               <List items={ph.mindful} />
             </div>
             <p className="text-[15px] leading-6">
@@ -134,12 +122,12 @@ export function DayScreen({ date, nav }: { date: DateKey; nav: Nav }) {
               <List items={sg.favorable} />
             </div>
             <div>
-              <Label className="mb-2">Чему уделить внимание</Label>
+              <Label className="mb-2">Осторожно</Label>
               <List items={sg.mindful} />
             </div>
             {sg.body && (
               <p className="text-[13px] text-muted">
-                Зона тела по средневековой традиции: {sg.body}. Это традиция, а не медицина.
+                Часть тела, которую по старой традиции стоит поберечь: {sg.body}. Это традиция, а не медицина.
               </p>
             )}
           </div>
@@ -153,11 +141,11 @@ export function DayScreen({ date, nav }: { date: DateKey; nav: Nav }) {
           <p className="text-[15px] leading-6">{content.special('voc').essence}</p>
           {model.voc.map((p) => (
             <p key={p.start.getTime()} className="mt-2 text-[14px] text-muted">
-              {humanDateTime(p.start, tz)} → {humanDateTime(p.end, tz)}. {p.lastAspect ? `Последний аспект: ${A.ASPECT_NAMES[p.lastAspect.kind]} с планетой ${A.PLANET_NAMES[p.lastAspect.planet]}` : 'В этом знаке аспектов не было'}, затем вход в {A.SIGN_NAMES[p.nextSign]}.
+              {humanDateTime(p.start, tz)} → {humanDateTime(p.end, tz)}. {p.lastAspect ? `Перед этим ${A.ASPECT_NAMES[p.lastAspect.kind]} с планетой ${A.PLANET_NAMES[p.lastAspect.planet]}` : 'В этом знаке Луна не встречалась с планетами'}, потом Луна входит в {A.SIGN_NAMES[p.nextSign]}.
             </p>
           ))}
           <p className="mt-3 text-[13px] leading-5 text-faint">
-            Режим: {settings.vocMode === 'modern' ? 'современный, Солнце…Плутон' : 'классический, Солнце…Сатурн'}. {content.special('voc').howCalculated}
+            Как считается: {content.special('voc').howCalculated} Режим: {settings.vocMode === 'modern' ? 'современный' : 'классический'}.
           </p>
         </Disclosure>
 
@@ -191,29 +179,6 @@ export function DayScreen({ date, nav }: { date: DateKey; nav: Nav }) {
                   </p>
                 ))}
             </div>
-          </Disclosure>
-        )}
-
-        {model.personal && (
-          <Disclosure title={`Мой личный день: ${model.personal.day}`} subtitle="нумерология, личный слой" badge={<span className="h-2.5 w-2.5 rounded-full" style={{ background: content.personal(model.personal.day).color.hex }} />}>
-            {(() => {
-              const p = content.personal(model.personal.day);
-              return (
-                <>
-                  <p className="text-[15px] leading-6">
-                    {p.essence} Тема дня: {p.theme}.
-                  </p>
-                  <div className="mt-3">
-                    <List items={p.favorable} />
-                  </div>
-                  <p className="mt-3 text-[15px] italic text-silver">«{p.affirmation}»</p>
-                  <p className="mt-3 text-[13px] text-muted">
-                    Цвет дня: {p.color.name}. Личный год {model.personal.year}, личный месяц {model.personal.month}.
-                  </p>
-                  <Meta {...p} />
-                </>
-              );
-            })()}
           </Disclosure>
         )}
 
@@ -259,13 +224,8 @@ export function DayScreen({ date, nav }: { date: DateKey; nav: Nav }) {
         )}
       </Card>
 
-      <div className="flex flex-wrap justify-center gap-2">
-        <Chip tone="soft">Факт: астрономия, до минуты</Chip>
-        <Chip tone="soft">Традиция: толкования школ</Chip>
-      </div>
-      <button className="mx-auto block text-[14px] text-accent" onClick={() => nav.push({ name: 'entry', date })}>
-        Записать этот день в дневник
-      </button>
+      <p className="px-2 text-center text-[13px] leading-5 text-faint">Время событий Луны считается астрономически точно. Советы — по традиции: это ориентир, решение всегда за тобой.</p>
+      <WhySheet card={card} model={model} open={why} onClose={() => setWhy(false)} />
     </div>
   );
 }

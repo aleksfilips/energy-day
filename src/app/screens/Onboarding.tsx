@@ -20,13 +20,13 @@ export function Onboarding() {
           <div className="rise-in flex flex-col items-center text-center">
             <Moon angle={120} size={170} />
             <div className="mt-6 font-display text-[30px] font-semibold leading-tight">{name ? `${name}, привет` : 'Энергия дня'}</div>
-            <p className="mt-3 max-w-[320px] text-[16px] leading-6 text-muted">Лунные сутки, фаза, знак и особые периоды на каждый день — посчитанные для твоего места, с честной границей между фактом и традицией.</p>
+            <p className="mt-3 max-w-[320px] text-[16px] leading-6 text-muted">Каждый день — простая подсказка: что сегодня хорошо делать, чего лучше избегать и какое время удачное. Всё посчитано для твоего места.</p>
           </div>
         )}
         {step === 1 && (
           <div className="rise-in space-y-4">
             <div className="font-display text-[26px] font-semibold">Где ты сейчас?</div>
-            <p className="text-[15px] text-muted">Лунные сутки меняются вместе с восходом Луны, поэтому место важно. Его всегда можно сменить.</p>
+            <p className="text-[15px] text-muted">Лунный день начинается с восходом Луны, а он в разных местах разный. Место всегда можно сменить.</p>
             <Card className="!py-1">
               {resolved.map((l) => (
                 <button key={l.id} className="flex w-full items-center gap-3 border-t border-line py-4 text-left first:border-t-0" onClick={() => setLocId(l.id)}>
@@ -46,7 +46,7 @@ export function Onboarding() {
         {step === 2 && (
           <div className="rise-in space-y-4">
             <div className="font-display text-[26px] font-semibold">День рождения</div>
-            <p className="text-[15px] text-muted">Для личного дня по нумерологии Л. Хей нужны только день и месяц. Хранится только на этом устройстве.</p>
+            <p className="text-[15px] text-muted">Нужны только день и месяц: по ним считается твой личный день. Дата хранится только на твоём телефоне.</p>
             <Card>
               <Label className="mb-3">Дата рождения</Label>
               <BirthdayInput value={birthday} onChange={setBirthday} />

@@ -57,3 +57,26 @@ function eventsBetween(loc: ResolvedLocation, direction: 1 | -1, start: Date, en
   }
   return out;
 }
+
+export interface SunDay {
+  /** Восход Солнца в этот календарный день, если есть. */
+  sunrise: Date | null;
+  /** Заход Солнца в этот календарный день, если есть. */
+  sunset: Date | null;
+  /** Длина светового дня в минутах (от восхода до захода); null, если одного из моментов нет. */
+  dayLengthMin: number | null;
+}
+
+/**
+ * Восход и заход Солнца за календарный день [start, end).
+ * Та же методика, что для Луны: верхний край диска, рефракция 34′.
+ */
+export function sunDay(loc: ResolvedLocation, start: Date, end: Date): SunDay {
+  const days = (end.getTime() - start.getTime()) / MS_PER_DAY;
+  const rise = SearchRiseSet(Body.Sun, toObserver(loc), 1, start, days);
+  const set = SearchRiseSet(Body.Sun, toObserver(loc), -1, start, days);
+  const sunrise = rise && rise.date < end ? rise.date : null;
+  const sunset = set && set.date < end ? set.date : null;
+  const dayLengthMin = sunrise && sunset && sunset > sunrise ? Math.round((sunset.getTime() - sunrise.getTime()) / 60_000) : null;
+  return { sunrise, sunset, dayLengthMin };
+}

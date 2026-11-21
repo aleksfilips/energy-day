@@ -43,7 +43,7 @@ const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
   },
   {
     id: 'upcoming',
-    label: 'Ближайшее',
+    label: 'События',
     icon: (
       <g fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
         <path d="M5 7h14M5 12h10M5 17h6" />
@@ -124,7 +124,7 @@ export function App() {
   } else {
     screen =
       tab === 'today' ? (
-        <TodayScreen nav={nav} />
+        <TodayScreen nav={nav} openUpcoming={() => setTab('upcoming')} />
       ) : tab === 'calendar' ? (
         <CalendarScreen nav={nav} ym={ym} setYm={setYm} />
       ) : tab === 'upcoming' ? (

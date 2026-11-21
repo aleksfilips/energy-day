@@ -96,7 +96,8 @@ export function Card({ children, className, onClick }: { children: ReactNode; cl
   return (
     <div
       onClick={onClick}
-      className={cx('rounded-[var(--radius-card)] bg-surface p-5', onClick && 'cursor-pointer active:scale-[0.99] transition-transform', className)}
+      style={{ boxShadow: 'var(--shadow)' }}
+      className={cx('rounded-[var(--radius-card)] border border-line bg-surface p-5', onClick && 'cursor-pointer active:scale-[0.99] transition-transform', className)}
     >
       {children}
     </div>
@@ -104,7 +105,7 @@ export function Card({ children, className, onClick }: { children: ReactNode; cl
 }
 
 export function Label({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cx('text-[11px] font-medium uppercase tracking-[0.14em] text-faint', className)}>{children}</div>;
+  return <div className={cx('text-[14px] font-medium text-muted', className)}>{children}</div>;
 }
 
 export function Chip({ children, tone = 'default', className }: { children: ReactNode; tone?: 'default' | 'accent' | 'soft'; className?: string }) {

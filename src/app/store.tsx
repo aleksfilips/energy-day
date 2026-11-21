@@ -67,7 +67,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    const bg = theme === 'dark' ? '#0e0f11' : '#f5f4f1';
+    const bg = theme === 'dark' ? '#101626' : '#f6f1e8';
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bg);
     setTelegramColors(bg);
   }, [theme]);

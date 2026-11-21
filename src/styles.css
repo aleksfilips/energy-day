@@ -12,53 +12,73 @@
   --color-silver: var(--silver);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-care: var(--care);
+  --color-care-soft: var(--care-soft);
   --color-tone-active: var(--tone-active);
   --color-tone-transition: var(--tone-transition);
   --color-tone-calm: var(--tone-calm);
   --color-tone-gentle: var(--tone-gentle);
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', Roboto, system-ui, sans-serif;
   --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, system-ui, sans-serif;
-  --radius-card: 22px;
+  --radius-card: 24px;
 }
 
 :root,
 :root[data-theme='dark'] {
-  --bg: #0e0f11;
-  --surface: #16171a;
-  --surface-2: #1e2024;
+  /* Ночное небо: глубокий синий, тёплое лунное золото, мягкий шалфей. */
+  --bg: #101626;
+  --bg-glow: rgba(120, 140, 200, 0.16);
+  --surface: #182036;
+  --surface-2: #222b44;
   --line: rgba(255, 255, 255, 0.07);
-  --ink: #eceef1;
-  --muted: #9a9fa8;
-  --faint: #5f636b;
-  --silver: #c9cdd4;
-  --accent: #e9a87a;
-  --accent-soft: rgba(233, 168, 122, 0.14);
-  --tone-active: #e9a87a;
-  --tone-transition: #c9cdd4;
-  --tone-calm: #8fa8c8;
-  --tone-gentle: #a99bc9;
-  --moon-lit: #e8e6df;
-  --moon-dark: #24262b;
+  --ink: #f1ede4;
+  --muted: #b3b8c8;
+  --faint: #7c8399;
+  --silver: #d3d6df;
+  --accent: #ecc98f;
+  --accent-soft: rgba(236, 201, 143, 0.14);
+  --good: #9fcfa6;
+  --good-soft: rgba(159, 207, 166, 0.13);
+  --care: #f0b48a;
+  --care-soft: rgba(240, 180, 138, 0.13);
+  --tone-active: #ecc98f;
+  --tone-transition: #c4cad8;
+  --tone-calm: #8fb3d9;
+  --tone-gentle: #b5a4d8;
+  --moon-lit: #f3ead5;
+  --moon-dark: #2b3553;
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 24px rgba(0, 0, 0, 0.18);
+  --night: rgba(0, 0, 0, 0.22);
   color-scheme: dark;
 }
 
 :root[data-theme='light'] {
-  --bg: #f5f4f1;
-  --surface: #ffffff;
-  --surface-2: #efeee9;
-  --line: rgba(0, 0, 0, 0.07);
-  --ink: #16171a;
-  --muted: #6b6f76;
-  --faint: #a3a6ab;
-  --silver: #7d838c;
-  --accent: #c4723c;
-  --accent-soft: rgba(196, 114, 60, 0.12);
-  --tone-active: #c4723c;
+  /* Утро: тёплая бумага, мягкое золото, приглушённые тона. */
+  --bg: #f6f1e8;
+  --bg-glow: rgba(236, 201, 143, 0.35);
+  --surface: #fffdf8;
+  --surface-2: #f0e9dc;
+  --line: rgba(60, 40, 10, 0.08);
+  --ink: #2a2620;
+  --muted: #6d665b;
+  --faint: #a39b8d;
+  --silver: #6f7480;
+  --accent: #b07d2e;
+  --accent-soft: rgba(176, 125, 46, 0.12);
+  --good: #3f7d4a;
+  --good-soft: rgba(63, 125, 74, 0.1);
+  --care: #b4602c;
+  --care-soft: rgba(180, 96, 44, 0.1);
+  --tone-active: #c48a35;
   --tone-transition: #8b9099;
-  --tone-calm: #5f7fa8;
+  --tone-calm: #5f87b4;
   --tone-gentle: #8a78b4;
-  --moon-lit: #fbfaf6;
-  --moon-dark: #d9d8d3;
+  --moon-lit: #fffaf0;
+  --moon-dark: #e2dacb;
+  --shadow: 0 1px 2px rgba(60, 40, 10, 0.05), 0 8px 24px rgba(60, 40, 10, 0.06);
+  --night: rgba(60, 40, 10, 0.07);
   color-scheme: light;
 }
 
@@ -70,7 +90,8 @@ body,
 
 body {
   margin: 0;
-  background: var(--bg);
+  background: radial-gradient(120% 60% at 50% -10%, var(--bg-glow), transparent 70%) no-repeat, var(--bg);
+  background-attachment: fixed;
   color: var(--ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;

@@ -6,7 +6,7 @@ import { StoreProvider } from './app/store';
 import { initTelegram } from './telegram';
 import './styles.css';
 
-initTelegram('#0e0f11');
+initTelegram('#101626');
 registerSW({ immediate: true });
 
 createRoot(document.getElementById('root')!).render(

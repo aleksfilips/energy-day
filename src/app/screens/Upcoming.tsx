@@ -33,8 +33,8 @@ export function UpcomingScreen({ nav }: { nav: Nav }) {
   return (
     <div className="space-y-4 pb-6">
       <header className="pt-2">
-        <div className="font-display text-[28px] font-semibold">Ближайшее</div>
-        <div className="text-[14px] text-muted">время — {location.name}</div>
+        <div className="font-display text-[30px] font-semibold">События</div>
+        <div className="text-[15px] text-muted">Что ждёт впереди. Время для места «{location.name}»</div>
       </header>
 
       <div className="grid grid-cols-2 gap-3">
@@ -87,7 +87,7 @@ export function UpcomingScreen({ nav }: { nav: Nav }) {
             </button>
           ))}
       </Card>
-      <p className="px-1 text-[12px] text-faint">Показаны фазы на 60 дней, затмения на год вперёд и периоды Луны без курса длиннее 12 часов.</p>
+      <p className="px-1 text-[13px] leading-5 text-faint">Здесь новолуния и полнолуния на 2 месяца, затмения на год вперёд и долгие (больше 12 часов) периоды Луны без курса: в такие дни лучше не планировать важных начинаний.</p>
     </div>
   );
 }

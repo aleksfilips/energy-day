@@ -62,7 +62,7 @@ export function LocationsScreen({ nav }: { nav: Nav }) {
     <div className="space-y-4 pb-8">
       <header className="pt-2">
         <div className="font-display text-[26px] font-semibold">Локация</div>
-        <div className="text-[14px] text-muted">лунные сутки зависят от места: в поездке переключи</div>
+        <div className="text-[14px] text-muted">лунный день зависит от места: в поездке переключи</div>
       </header>
       <Card className="!py-1">
         {settings.locations.map((l) => (
@@ -218,8 +218,8 @@ export function SettingsScreen({ nav }: { nav: Nav }) {
       <Card>
         <Label className="mb-1">Слои</Label>
         <Toggle label="Мой личный день" hint="нумерология по Л. Хей" checked={settings.layers.personal} onChange={(v) => void update({ layers: { ...settings.layers, personal: v } })} />
-        <Toggle label="Ведический слой" hint="титхи и накшатры, сидерика Лахири" checked={settings.layers.vedic} onChange={(v) => void update({ layers: { ...settings.layers, vedic: v } })} />
-        <Toggle label="Садовый слой" hint="дни корня, листа, цветка, плода по М. Тун" checked={settings.layers.garden} onChange={(v) => void update({ layers: { ...settings.layers, garden: v } })} />
+        <Toggle label="Индийский календарь" hint="лунный день и звезда дня по индийской традиции" checked={settings.layers.vedic} onChange={(v) => void update({ layers: { ...settings.layers, vedic: v } })} />
+        <Toggle label="Календарь садовода" hint="дни корня, листа, цветка и плода по Марии Тун" checked={settings.layers.garden} onChange={(v) => void update({ layers: { ...settings.layers, garden: v } })} />
       </Card>
 
       <Card className="space-y-4">
@@ -244,7 +244,7 @@ export function SettingsScreen({ nav }: { nav: Nav }) {
             <span className="w-8">до</span>
             <input type="range" min={18} max={24} value={settings.daylight.to} onChange={(e) => void update({ daylight: { ...settings.daylight, to: Number(e.target.value) } })} />
           </div>
-          <div className="text-[12px] text-faint">Основа «Энергии дня» — сутки, которые идут большую часть этого окна.</div>
+          <div className="text-[12px] text-faint">Советы на день даются по тому лунному дню, который идёт большую часть этого времени.</div>
         </div>
       </Card>
 

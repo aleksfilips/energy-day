@@ -25,6 +25,56 @@ export function ToneScaleView({ value, label }: { value: number; label: string }
   );
 }
 
+/** Лист «Почему так?»: из чего собран день. */
+export function WhySheet({ card, model, open, onClose }: { card: EnergyCard; model: DayModel; open: boolean; onClose: () => void }) {
+  const tz = model.location.timeZone;
+  const STEP: Record<string, string> = { Основа: 'Лунный день', Фон: 'Фаза Луны', Окраска: 'Знак Луны', Модификаторы: 'Особые события', 'Личная нота': 'Личный день' };
+  return (
+    <Sheet open={open} onClose={onClose} title="Из чего сложился день">
+      <div className="space-y-4">
+        {card.why.map((w) => (
+          <div key={w.step}>
+            <div className="text-[14px] font-medium text-accent">{STEP[w.step] ?? w.step}</div>
+            <div className="mt-0.5 text-[14px] text-muted">{w.input}</div>
+            <div className="mt-0.5 text-[16px] leading-6">{w.effect}</div>
+          </div>
+        ))}
+        <div>
+          <div className="text-[14px] font-medium text-accent">Насколько активный день</div>
+          <div className="mt-2">
+            <ToneScaleView value={card.tone.value} label={card.tone.label} />
+          </div>
+          <div className="mt-3 space-y-1 text-[14px]">
+            {card.tone.parts.map((p) => (
+              <div key={p.label} className="flex justify-between">
+                <span className="text-muted">{p.label}</span>
+                <span className="tabular-nums">{p.value > 0 ? `+${p.value}` : p.value}</span>
+              </div>
+            ))}
+            <div className="flex justify-between border-t border-line pt-1">
+              <span>итог (от −3 до +3)</span>
+              <span className="tabular-nums">{card.tone.value > 0 ? `+${card.tone.value}` : card.tone.value}</span>
+            </div>
+          </div>
+        </div>
+        <div className="border-t border-line pt-4">
+          <div className="mb-2 text-[14px] font-medium text-faint">Правила, по которым всё считается</div>
+          <div className="space-y-2">
+            {RULES_TEXT.map((r) => (
+              <div key={r.title} className="text-[14px] leading-5 text-muted">
+                <span className="text-ink">{r.title}.</span> {r.text}
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 text-[13px] leading-5 text-faint">
+            Время Луны считается астрономически точно, до минуты, для места «{model.location.name}». Толкования — по традиции. «Светлое время» — {A.formatTime(model.window.from, tz)}–{A.formatTime(model.window.to, tz)}, его можно поменять в настройках.
+          </div>
+        </div>
+      </div>
+    </Sheet>
+  );
+}
+
 export function EnergyCardView({ card, model }: { card: EnergyCard; model: DayModel }) {
   const [why, setWhy] = useState(false);
   const tz = model.location.timeZone;
@@ -105,7 +155,7 @@ export function EnergyCardView({ card, model }: { card: EnergyCard; model: DayMo
             </div>
           </div>
           <div className="border-t border-line pt-4">
-            <div className="mb-2 text-[13px] font-medium text-faint">Правила синтеза</div>
+            <div className="mb-2 text-[13px] font-medium text-faint">Правила</div>
             <div className="space-y-2">
               {RULES_TEXT.map((r) => (
                 <div key={r.title} className="text-[13px] leading-5 text-muted">

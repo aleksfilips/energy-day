@@ -58,7 +58,7 @@ export function CalendarScreen({ nav, ym, setYm }: { nav: Nav; ym: { y: number; 
 
       <div className="grid grid-cols-7 gap-1.5 text-center">
         {WEEKDAYS_SHORT.map((w) => (
-          <div key={w} className="pb-1 text-[11px] uppercase tracking-wider text-faint">
+          <div key={w} className="pb-1 text-[12px] text-faint">
             {w}
           </div>
         ))}
@@ -74,15 +74,15 @@ export function CalendarScreen({ nav, ym, setYm }: { nav: Nav; ym: { y: number; 
               onClick={() => nav.push({ name: 'day', date: k })}
               className={cx(
                 'relative flex aspect-[0.78] flex-col items-center justify-between rounded-2xl py-2 transition active:scale-95',
-                isToday ? 'bg-ink text-bg' : 'bg-surface',
+                isToday ? 'bg-accent text-[#1b1608]' : 'border border-line bg-surface',
               )}
             >
-              <span className={cx('text-[12px]', isToday ? 'text-bg/70' : 'text-faint')}>{Number(k.slice(8))}</span>
+              <span className={cx('text-[12px]', isToday ? 'text-[#1b1608]/70' : 'text-faint')}>{Number(k.slice(8))}</span>
               {b ? (
                 <>
                   <span className="relative font-display text-[19px] font-light leading-none">
                     {b.dominant}
-                    {b.secondary !== null && <span className={cx('absolute -right-3 -top-1 text-[9px]', isToday ? 'text-bg/60' : 'text-faint')}>{b.secondary}</span>}
+                    {b.secondary !== null && <span className={cx('absolute -right-3 -top-1 text-[9px]', isToday ? 'text-[#1b1608]/60' : 'text-faint')}>{b.secondary}</span>}
                   </span>
                   <span className="flex items-center gap-1">
                     {b.quarter !== null || b.eclipse ? <MiniMoon angle={b.phase.angle} size={11} /> : null}
@@ -93,28 +93,28 @@ export function CalendarScreen({ nav, ym, setYm }: { nav: Nav; ym: { y: number; 
                 <span className="h-4 w-4 animate-pulse rounded-full bg-surface-2" />
               )}
               {b?.eclipse && <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rotate-45 bg-accent" />}
-              {b?.hasVoc && <span className={cx('absolute bottom-1 h-[2px] w-4 rounded-full', isToday ? 'bg-bg/40' : 'bg-accent/50')} />}
+              {b?.hasVoc && <span className={cx('absolute bottom-1 h-[2px] w-4 rounded-full', isToday ? 'bg-[#1b1608]/40' : 'bg-accent/50')} />}
             </button>
           );
         })}
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-2 px-1 text-[12px] text-muted">
-        {(['активная', 'переходная', 'созерцательная', 'бережная'] as const).map((t) => (
+      <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-2.5 px-1 text-[14px] text-muted">
+        {([['активная', 'активный день'], ['переходная', 'переходный день'], ['созерцательная', 'спокойный день'], ['бережная', 'день отдыха']] as const).map(([t, label]) => (
           <span key={t} className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full" style={{ background: TONE_COLOR[t] }} />
-            {t}
+            <span className="h-2.5 w-2.5 rounded-full" style={{ background: TONE_COLOR[t] }} />
+            {label}
           </span>
         ))}
         <span className="flex items-center gap-2">
-          <span className="h-[2px] w-4 rounded-full bg-accent/50" /> Луна без курса &gt; 4 ч днём
+          <span className="h-[2px] w-4 rounded-full bg-accent/50" /> долго Луна без курса
         </span>
         <span className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 rotate-45 bg-accent" /> затмение
         </span>
       </div>
-      <p className="mt-4 px-1 text-[12px] leading-5 text-faint">
-        В ячейке — лунные сутки, которые идут большую часть светлого времени ({settings.daylight.from}:00–{settings.daylight.to}:00). Цвет точки — тон суток по традиции. Маленькая цифра — вторые сутки, если они тоже занимают заметную часть дня. Иконка Луны — день точной фазы.
+      <p className="mt-4 px-1 text-[13px] leading-5 text-faint">
+        Большая цифра — лунный день, который идёт большую часть дня. Маленькая — следующий, если он начинается днём. Точка — характер дня. Луна — новолуние, полнолуние или четверть. Нажми на день, чтобы увидеть подсказки.
       </p>
     </div>
   );

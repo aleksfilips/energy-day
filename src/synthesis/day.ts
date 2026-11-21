@@ -36,6 +36,8 @@ export interface DayModel {
   /** Доля светлого окна под Луной без курса, 0..1. */
   vocDaylightShare: number;
   riseSet: A.RiseSetEvent[];
+  /** Восход и заход Солнца, длина светового дня. */
+  sun: A.SunDay;
   eclipses: A.Eclipse[];
   corridor: A.EclipseCorridor | null;
   apsides: A.LunarApsis[];
@@ -99,6 +101,7 @@ export function computeDay(location: A.ResolvedLocation, date: A.DateKey, opts: 
     voc,
     vocDaylightShare: vocMs / (to.getTime() - from.getTime()),
     riseSet: A.moonRiseSetBetween(location, bounds.start, bounds.end),
+    sun: A.sunDay(location, bounds.start, bounds.end),
     eclipses: A.eclipsesBetween(bounds.start, bounds.end),
     corridor: corridors[0] ?? null,
     apsides: A.apsidesBetween(bounds.start, bounds.end),
@@ -207,7 +210,7 @@ export function computeUpcoming(from: Date, days: number, vocMode: A.VocMode, mi
   }
   for (const p of A.vocPeriodsBetween(from, to, vocMode)) {
     const h = A.vocHours(p);
-    if (h >= minVocHours && p.end > from) out.push({ kind: 'voc', time: p.start, end: p.end, title: 'Долгая Луна без курса', detail: `${Math.round(h)} ч, до входа в ${A.SIGN_NAMES[p.nextSign]}` });
+    if (h >= minVocHours && p.end > from) out.push({ kind: 'voc', time: p.start, end: p.end, title: 'Долгая Луна без курса', detail: `${Math.round(h)} ч: важное не начинать` });
   }
   return out.sort((a, b) => a.time.getTime() - b.time.getTime());
 }

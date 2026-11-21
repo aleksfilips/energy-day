@@ -11,6 +11,8 @@ import { makeContent } from '../src/content';
 import { DEFAULT_NUMEROLOGY } from '../src/personal/numerology';
 import { computeDay } from '../src/synthesis/day';
 import { synthesize } from '../src/synthesis/rules';
+import { dayAreas } from '../src/synthesis/areas';
+import { dayPlan, goodWindows, spanText, vocInDaylight } from '../src/synthesis/life';
 
 const env = (k: string, d?: string) => process.env[k]?.trim() || d;
 const dry = process.argv.includes('--dry');
@@ -41,21 +43,35 @@ const ld = content.lunarDay(day.dominant.number);
 const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 const [, m, d] = date.split('-').map(Number) as [number, number, number];
 
+const plan = dayPlan(day, card, content);
+const areas = dayAreas(day);
+const WD = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
+const wd = WD[new Date(Date.UTC(Number(day.date.slice(0, 4)), m - 1, d)).getUTCDay()]!;
+const names = (v: string) => areas.filter((a) => a.verdict === v).map((a) => a.title.toLowerCase()).join(', ');
+const change = card.base.prev !== null && card.base.changesAt ? ` (с ${t(card.base.changesAt)}, до этого ${card.base.prev}-й)` : card.base.next !== null && card.base.changesAt ? ` (в ${t(card.base.changesAt)} начнётся ${card.base.next}-й)` : '';
+const good = goodWindows(day);
+const voc = vocInDaylight(day);
+
 const lines = [
-  `<b>${d} ${MONTHS[m - 1]}</b> · ${esc(loc.name)}`,
+  `<b>${wd[0]!.toUpperCase() + wd.slice(1)}, ${d} ${MONTHS[m - 1]}</b> · ${esc(loc.name)}`,
+  `🌙 ${day.dominant.number}-й лунный день${change}`,
+  `Луна ${day.phase.waxing ? 'растёт' : 'убывает'}, ${esc(A.inSign(day.dominantSign))}`,
   '',
-  `🌙 ${esc(A.describeLunarDays(day.lunarDays, tz))} · ${esc(ld.symbols[0]!)}`,
-  `${esc(A.PHASE_NAMES[day.phase.phase])}, ${Math.round(day.phase.illuminationPct)}% · Луна ${esc(A.inSign(day.dominantSign))}`,
+  `<b>${esc(plan.mood.title)}.</b> ${esc(plan.headline)}`,
   '',
-  esc(card.summary),
-  '',
-  card.tags.join(' · '),
 ];
-const vocs = card.modifiers.filter((x) => x.key === 'voc');
-if (vocs.length) lines.push('', `Луна без курса: ${vocs.map((v) => esc(v.text.split(':')[0]!)).join(', ')}`);
-for (const mm of card.modifiers.filter((x) => ['eclipse', 'new', 'full', 'supermoon', 'corridor'].includes(x.key))) lines.push(`${esc(mm.title)}: ${esc(mm.text)}`);
-if (card.personal) lines.push('', `Мой личный день: <b>${card.personal.number}</b> (${esc(card.personal.color.name)}) — ${esc(card.personal.note.replace(/^для тебя лично это день числа \d+: /, ''))}`);
-lines.push('', '<i>Ориентир для внимания. Решение принимаешь ты.</i>');
+if (names('good')) lines.push(`✅ <b>Хорошо:</b> ${esc(names('good'))}`);
+if (names('bad')) lines.push(`⛔ <b>Лучше не стоит:</b> ${esc(names('bad'))}`);
+lines.push('');
+lines.push(`🕐 Для важных дел: ${good.length ? good.map((w) => spanText(w, tz)).join(', ') : 'сегодня лучше без важных начинаний'}`);
+if (voc.length) lines.push(`⏸ Луна без курса: ${voc.map((w) => spanText(w, tz)).join(', ')} — новое не начинать`);
+if (day.sun.sunrise && day.sun.sunset) lines.push(`☀️ Восход ${t(day.sun.sunrise)}, закат ${t(day.sun.sunset)}`);
+for (const mm of card.modifiers.filter((x) => ['eclipse', 'new', 'full', 'supermoon'].includes(x.key))) lines.push(`✨ ${esc(mm.title)}: ${esc(mm.text)}`);
+if (card.personal) {
+  const pn = content.personal(card.personal.number);
+  lines.push('', `🔢 Твой личный день: <b>${card.personal.number}</b>, цвет ${esc(pn.color.name)}. ${esc(pn.essence)}`);
+}
+lines.push('', `💭 <i>${esc(plan.question)}</i>`);
 const text = lines.join('\n');
 
 if (dry) {
@@ -78,7 +94,7 @@ const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     text,
     parse_mode: 'HTML',
     disable_web_page_preview: true,
-    ...(url ? { reply_markup: { inline_keyboard: [[{ text: 'Открыть день', web_app: { url } }]] } } : {}),
+    ...(url ? { reply_markup: { inline_keyboard: [[{ text: 'Открыть подробно', web_app: { url } }]] } } : {}),
   }),
 });
 const body = await res.json();

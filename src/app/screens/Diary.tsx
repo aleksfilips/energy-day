@@ -54,7 +54,7 @@ export function EntryScreen({ date, nav }: { date: DateKey; nav: Nav }) {
       <header className="pt-2">
         <div className="font-display text-[26px] font-semibold">{humanDate(date, false)}</div>
         <div className="text-[14px] text-muted">
-          {data.model.dominant.number}-е сутки · {A.PHASE_NAMES[data.model.phase.phase]} · Луна {A.inSign(data.model.dominantSign)}
+          {data.model.dominant.number}-й лунный день · {A.PHASE_NAMES[data.model.phase.phase]} · Луна {A.inSign(data.model.dominantSign)}
         </div>
       </header>
       <Card className="space-y-6">
@@ -140,7 +140,7 @@ function FollowUps() {
         <div key={e.date}>
           <div className="text-[15px]">{e.decision!.text || 'Решение без описания'}</div>
           <div className="text-[13px] text-muted">
-            {humanDate(e.date, false)} · {e.snapshot.lunarDay}-е сутки{e.snapshot.voc ? ' · Луна без курса' : ''}
+            {humanDate(e.date, false)} · {e.snapshot.lunarDay}-й лунный день{e.snapshot.voc ? ' · Луна без курса' : ''}
           </div>
           <div className="mt-2 flex gap-2">
             {[1, 2, 3, 4, 5].map((n) => (
@@ -206,7 +206,7 @@ export function DiaryScreen({ nav }: { nav: Nav }) {
                   <div>
                     <div className="text-[15px]">{humanDate(e.date)}</div>
                     <div className="text-[13px] text-muted">
-                      {e.snapshot.lunarDay}-е сутки · {A.PHASE_NAMES[e.snapshot.phase as A.PhaseKey]} · {A.SIGN_NAMES[e.snapshot.sign as A.Sign]}
+                      {e.snapshot.lunarDay}-й лунный день · {A.PHASE_NAMES[e.snapshot.phase as A.PhaseKey]} · {A.SIGN_NAMES[e.snapshot.sign as A.Sign]}
                     </div>
                   </div>
                   <div className="flex gap-3 text-right font-display tabular-nums">
@@ -268,13 +268,13 @@ function Patterns({ entries }: { entries: DiaryEntry[] }) {
       )}
       {r.enough && (
         <Card>
-          <Label>Какой слой лучше совпадает с твоими оценками</Label>
+          <Label>Что сильнее всего влияет на твоё самочувствие</Label>
           {r.best ? (
             <p className="mt-2 font-display text-[20px] leading-snug">
               {LAYER_NAMES[r.best.layer]}: объясняет {Math.round(r.best.omega2! * 100)}% разброса оценок.
             </p>
           ) : (
-            <p className="mt-2 text-[16px]">Пока ни один слой не объясняет твои оценки лучше случайности.</p>
+            <p className="mt-2 text-[16px]">Пока явной связи нет: твоё самочувствие не зависит заметно ни от одного лунного признака. Продолжай записывать.</p>
           )}
           <div className="mt-4 space-y-2">
             {[...r.layers]
