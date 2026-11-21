@@ -1,1 +1,28 @@
+name: Утреннее сообщение
 
+on:
+  schedule:
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsx scripts/morning.ts
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          APP_URL: ${{ vars.APP_URL }}
+          LOCATION_NAME: ${{ vars.LOCATION_NAME }}
+          LATITUDE: ${{ vars.LATITUDE }}
+          LONGITUDE: ${{ vars.LONGITUDE }}
+          TIME_ZONE: ${{ vars.TIME_ZONE }}
+          BIRTH_DAY: ${{ secrets.BIRTH_DAY }}
+          BIRTH_MONTH: ${{ secrets.BIRTH_MONTH }}
