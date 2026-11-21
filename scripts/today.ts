@@ -1,0 +1,20 @@
+// Быстрый вывод данных на дату: npx tsx scripts/today.ts 2026-11-19 [locationId]
+import * as A from '../src/astro';
+const date = process.argv[2] ?? A.toDateKey(new Date(), A.DEFAULT_TIME_ZONE);
+const loc = A.requireResolved(A.LOCATION_PRESETS.find((l) => l.id === (process.argv[3] ?? 'yekaterinburg'))!);
+const tz = loc.timeZone;
+const { start, end } = A.dayBounds(date, tz);
+const noon = new Date((start.getTime() + end.getTime()) / 2);
+const f = (d: Date) => A.formatDateTime(d, tz);
+console.log(`${loc.name}, ${date}`);
+console.log('Лунные сутки:', A.describeLunarDays(A.lunarDaysForDate(loc, date), tz));
+for (const s of A.lunarDaysForDate(loc, date)) console.log(`  ${s.day.number}-е из ${s.day.totalInCycle}: ${f(s.day.start)} → ${f(s.day.end)}`);
+const ph = A.phaseInfo(noon);
+console.log(`Фаза: ${A.PHASE_NAMES[ph.phase]}, угол ${ph.angle.toFixed(1)}°, освещ. ${ph.illuminationPct.toFixed(1)}%`);
+console.log('Восходы/заходы:', A.moonRiseSetBetween(loc, start, end).map((e) => `${e.kind} ${A.formatTime(e.time, tz)}`).join(', ') || 'нет');
+const ms = A.moonSign(noon);
+console.log(`Знак: Луна в ${A.SIGN_NAMES_PREP[ms.sign]} ${ms.degreeInSign.toFixed(1)}°`);
+console.log('Ингрессии:', A.ingressesBetween(start, end).map((i) => `${A.SIGN_NAMES[i.sign]} ${A.formatTime(i.time, tz)}`).join(', ') || 'нет');
+for (const v of A.vocPeriodsBetween(start, end)) console.log(`VOC: ${f(v.start)} → ${f(v.end)} (${v.lastAspect ? A.ASPECT_NAMES[v.lastAspect.kind] + ' ' + A.PLANET_NAMES[v.lastAspect.planet] : 'без аспектов'})`);
+const t = A.tithi(noon), n = A.nakshatra(noon), g = A.gardenInfo(noon);
+console.log(`Титхи ${t.number} (${t.name}), накшатра ${n.number} ${n.name}, сад: ${A.GARDEN_DAY_NAMES[g.day]} (${g.actualConstellation})`);

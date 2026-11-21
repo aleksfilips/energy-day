@@ -1,0 +1,222 @@
+[
+ {
+  "number": 1,
+  "essence": "Начало, воля, новые двери.",
+  "theme": "новое начало",
+  "note": "для тебя лично это день числа 1: время начинать и брать инициативу",
+  "favorable": [
+   "начать новое",
+   "проявить инициативу",
+   "действовать самостоятельно"
+  ],
+  "color": {
+   "name": "красный",
+   "hex": "#C8524A"
+  },
+  "affirmation": "Я открываю новые двери и смело делаю первый шаг.",
+  "school": "numerology_hay",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 2,
+  "essence": "Партнёрство, терпение, мягкость.",
+  "theme": "сотрудничество",
+  "note": "для тебя лично это день числа 2: время договариваться и слушать",
+  "favorable": [
+   "совместные дела",
+   "дипломатия",
+   "терпеливое ожидание"
+  ],
+  "color": {
+   "name": "оранжевый",
+   "hex": "#D9853B"
+  },
+  "affirmation": "Я в согласии с людьми вокруг и умею ждать.",
+  "school": "numerology_hay",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 3,
+  "essence": "Радость, творчество, общение.",
+  "theme": "самовыражение",
+  "note": "для тебя лично это день числа 3: время радоваться и творить",
+  "favorable": [
+   "творчество",
+   "встречи",
+   "лёгкость"
+  ],
+  "color": {
+   "name": "жёлтый",
+   "hex": "#D9B54A"
+  },
+  "affirmation": "Я выражаю себя легко и с радостью.",
+  "school": "numerology_hay",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 4,
+  "essence": "Порядок, труд, фундамент.",
+  "theme": "основательность",
+  "note": "для тебя лично это день числа 4: время строить и наводить порядок",
+  "favorable": [
+   "планирование",
+   "работа",
+   "порядок в делах"
+  ],
+  "color": {
+   "name": "зелёный",
+   "hex": "#6E9E6A"
+  },
+  "affirmation": "Я строю прочный фундамент своей жизни.",
+  "school": "numerology_hay",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 5,
+  "essence": "Движение, перемены, свобода.",
+  "theme": "перемены",
+  "note": "для тебя лично это день числа 5: движение и перемены",
+  "favorable": [
+   "поездки",
+   "новый опыт",
+   "гибкость"
+  ],
+  "color": {
+   "name": "голубой",
+   "hex": "#5C8FC2"
+  },
+  "affirmation": "Я открыт переменам и двигаюсь свободно.",
+  "school": "numerology_hay",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 6,
+  "essence": "Любовь, дом, ответственность.",
+  "theme": "забота",
+  "note": "для тебя лично это день числа 6: время дома, семьи и заботы",
+  "favorable": [
+   "семья",
+   "дом",
+   "помощь близким"
+  ],
+  "color": {
+   "name": "индиго",
+   "hex": "#4B5AA6"
+  },
+  "affirmation": "Я окружён любовью и делюсь ею.",
+  "school": "numerology_hay",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 7,
+  "essence": "Тишина, анализ, внутренний мир.",
+  "theme": "осмысление",
+  "note": "для тебя лично это день числа 7: время тишины и осмысления",
+  "favorable": [
+   "размышления",
+   "учёба",
+   "уединение"
+  ],
+  "color": {
+   "name": "фиолетовый",
+   "hex": "#8A63B8"
+  },
+  "affirmation": "Я доверяю своей внутренней мудрости.",
+  "school": "numerology_hay",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 8,
+  "essence": "Сила, деньги, результат.",
+  "theme": "достижение",
+  "note": "для тебя лично это день числа 8: время результата и дел",
+  "favorable": [
+   "финансы",
+   "деловые решения",
+   "достижения"
+  ],
+  "color": {
+   "name": "розовый",
+   "hex": "#C97B98"
+  },
+  "affirmation": "Я с благодарностью принимаю изобилие.",
+  "school": "numerology_hay",
+  "consensus": "medium",
+  "confidence": "low",
+  "needsReview": true
+ },
+ {
+  "number": 9,
+  "essence": "Завершение, отпускание, щедрость.",
+  "theme": "завершение",
+  "note": "для тебя лично это день числа 9: время завершать и отпускать",
+  "favorable": [
+   "завершать",
+   "прощать",
+   "помогать"
+  ],
+  "color": {
+   "name": "золотистый",
+   "hex": "#C9A45C"
+  },
+  "affirmation": "Я с лёгкостью отпускаю то, что завершилось.",
+  "school": "numerology_hay",
+  "consensus": "medium",
+  "confidence": "low",
+  "needsReview": true
+ },
+ {
+  "number": 11,
+  "essence": "Мастер-число: интуиция, вдохновение, высокое напряжение.",
+  "theme": "вдохновение",
+  "note": "для тебя лично это день мастер-числа 11: интуиция и вдохновение",
+  "favorable": [
+   "интуиция",
+   "вдохновлять других",
+   "духовные практики"
+  ],
+  "color": {
+   "name": "серебристый",
+   "hex": "#B8BEC8"
+  },
+  "affirmation": "Я слышу свою интуицию и доверяю ей.",
+  "school": "numerology_hay",
+  "consensus": "medium",
+  "confidence": "low",
+  "needsReview": true
+ },
+ {
+  "number": 22,
+  "essence": "Мастер-число: большой замысел и его воплощение.",
+  "theme": "воплощение",
+  "note": "для тебя лично это день мастер-числа 22: время больших замыслов",
+  "favorable": [
+   "масштабные проекты",
+   "стратегия",
+   "созидание"
+  ],
+  "color": {
+   "name": "золотой",
+   "hex": "#D1AE5E"
+  },
+  "affirmation": "Я воплощаю большой замысел шаг за шагом.",
+  "school": "numerology_hay",
+  "consensus": "medium",
+  "confidence": "low",
+  "needsReview": true
+ }
+]

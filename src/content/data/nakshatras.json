@@ -1,0 +1,488 @@
+[
+ {
+  "number": 1,
+  "name": "Ашвини",
+  "ruler": "Кету",
+  "deity": "Ашвины",
+  "symbol": "голова коня",
+  "essence": "Накшатра Ашвини: скорость, исцеление, начало.",
+  "favorable": [
+   "скорость"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 2,
+  "name": "Бхарани",
+  "ruler": "Венера",
+  "deity": "Яма",
+  "symbol": "йони",
+  "essence": "Накшатра Бхарани: сдерживание, ответственность, рождение.",
+  "favorable": [
+   "сдерживание"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 3,
+  "name": "Криттика",
+  "ruler": "Солнце",
+  "deity": "Агни",
+  "symbol": "бритва, пламя",
+  "essence": "Накшатра Криттика: очищение огнём, ясность, решительность.",
+  "favorable": [
+   "очищение огнём"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 4,
+  "name": "Рохини",
+  "ruler": "Луна",
+  "deity": "Брахма (Праджапати)",
+  "symbol": "колесница",
+  "essence": "Накшатра Рохини: рост, плодородие, красота.",
+  "favorable": [
+   "рост"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 5,
+  "name": "Мригашира",
+  "ruler": "Марс",
+  "deity": "Сома",
+  "symbol": "голова оленя",
+  "essence": "Накшатра Мригашира: поиск, любопытство, мягкость.",
+  "favorable": [
+   "поиск"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 6,
+  "name": "Ардра",
+  "ruler": "Раху",
+  "deity": "Рудра",
+  "symbol": "слеза",
+  "essence": "Накшатра Ардра: буря и обновление, сильные чувства.",
+  "favorable": [
+   "буря и обновление"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 7,
+  "name": "Пунарвасу",
+  "ruler": "Юпитер",
+  "deity": "Адити",
+  "symbol": "колчан стрел",
+  "essence": "Накшатра Пунарвасу: возвращение, восстановление, дом.",
+  "favorable": [
+   "возвращение"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 8,
+  "name": "Пушья",
+  "ruler": "Сатурн",
+  "deity": "Брихаспати",
+  "symbol": "вымя коровы, цветок",
+  "essence": "Накшатра Пушья: питание, забота, благоприятные начинания.",
+  "favorable": [
+   "питание"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 9,
+  "name": "Ашлеша",
+  "ruler": "Меркурий",
+  "deity": "Наги",
+  "symbol": "свернувшаяся змея",
+  "essence": "Накшатра Ашлеша: глубина, хитрость, внимание к манипуляциям.",
+  "favorable": [
+   "глубина"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 10,
+  "name": "Магха",
+  "ruler": "Кету",
+  "deity": "Питри (предки)",
+  "symbol": "трон",
+  "essence": "Накшатра Магха: род, наследие, достоинство.",
+  "favorable": [
+   "род"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 11,
+  "name": "Пурва-пхалгуни",
+  "ruler": "Венера",
+  "deity": "Бхага",
+  "symbol": "передние ножки ложа",
+  "essence": "Накшатра Пурва-пхалгуни: отдых, удовольствие, любовь.",
+  "favorable": [
+   "отдых"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 12,
+  "name": "Уттара-пхалгуни",
+  "ruler": "Солнце",
+  "deity": "Арьяман",
+  "symbol": "задние ножки ложа",
+  "essence": "Накшатра Уттара-пхалгуни: договоры, дружба, верность.",
+  "favorable": [
+   "договоры"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 13,
+  "name": "Хаста",
+  "ruler": "Луна",
+  "deity": "Савитар",
+  "symbol": "ладонь",
+  "essence": "Накшатра Хаста: мастерство, ремесло, ловкость рук.",
+  "favorable": [
+   "мастерство"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 14,
+  "name": "Читра",
+  "ruler": "Марс",
+  "deity": "Тваштар (Вишвакарма)",
+  "symbol": "яркая жемчужина",
+  "essence": "Накшатра Читра: созидание, дизайн, красота.",
+  "favorable": [
+   "созидание"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 15,
+  "name": "Свати",
+  "ruler": "Раху",
+  "deity": "Ваю",
+  "symbol": "молодой росток, коралл",
+  "essence": "Накшатра Свати: независимость, гибкость, торговля.",
+  "favorable": [
+   "независимость"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 16,
+  "name": "Вишакха",
+  "ruler": "Юпитер",
+  "deity": "Индра и Агни",
+  "symbol": "триумфальная арка",
+  "essence": "Накшатра Вишакха: цель, упорство, достижение.",
+  "favorable": [
+   "цель"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 17,
+  "name": "Анурадха",
+  "ruler": "Сатурн",
+  "deity": "Митра",
+  "symbol": "лотос",
+  "essence": "Накшатра Анурадха: дружба, преданность, сотрудничество.",
+  "favorable": [
+   "дружба"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 18,
+  "name": "Джйештха",
+  "ruler": "Меркурий",
+  "deity": "Индра",
+  "symbol": "серьга, зонт",
+  "essence": "Накшатра Джйештха: старшинство, защита, ответственность.",
+  "favorable": [
+   "старшинство"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 19,
+  "name": "Мула",
+  "ruler": "Кету",
+  "deity": "Ниррити",
+  "symbol": "связка корней",
+  "essence": "Накшатра Мула: докопаться до сути, разрушение старого.",
+  "favorable": [
+   "докопаться до сути"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 20,
+  "name": "Пурва-ашадха",
+  "ruler": "Венера",
+  "deity": "Апас (воды)",
+  "symbol": "бивень слона, веер",
+  "essence": "Накшатра Пурва-ашадха: непобедимость, очищение, вдохновение.",
+  "favorable": [
+   "непобедимость"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 21,
+  "name": "Уттара-ашадха",
+  "ruler": "Солнце",
+  "deity": "Вишведевы",
+  "symbol": "бивень слона",
+  "essence": "Накшатра Уттара-ашадха: окончательная победа, долгие цели.",
+  "favorable": [
+   "окончательная победа"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 22,
+  "name": "Шравана",
+  "ruler": "Луна",
+  "deity": "Вишну",
+  "symbol": "ухо, три следа",
+  "essence": "Накшатра Шравана: слушание, учёба, связь.",
+  "favorable": [
+   "слушание"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 23,
+  "name": "Дхаништха",
+  "ruler": "Марс",
+  "deity": "Васу",
+  "symbol": "барабан",
+  "essence": "Накшатра Дхаништха: ритм, музыка, богатство.",
+  "favorable": [
+   "ритм"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 24,
+  "name": "Шатабхиша",
+  "ruler": "Раху",
+  "deity": "Варуна",
+  "symbol": "пустой круг",
+  "essence": "Накшатра Шатабхиша: исцеление, тайна, уединение.",
+  "favorable": [
+   "исцеление"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 25,
+  "name": "Пурва-бхадрапада",
+  "ruler": "Юпитер",
+  "deity": "Аджа Экапада",
+  "symbol": "мечи",
+  "essence": "Накшатра Пурва-бхадрапада: интенсивность, аскеза, перемены.",
+  "favorable": [
+   "интенсивность"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 26,
+  "name": "Уттара-бхадрапада",
+  "ruler": "Сатурн",
+  "deity": "Ахир Будхнья",
+  "symbol": "задние ножки погребального ложа",
+  "essence": "Накшатра Уттара-бхадрапада: глубина, мудрость, спокойствие.",
+  "favorable": [
+   "глубина"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 27,
+  "name": "Ревати",
+  "ruler": "Меркурий",
+  "deity": "Пушан",
+  "symbol": "рыба, барабан",
+  "essence": "Накшатра Ревати: путешествия, защита, завершение.",
+  "favorable": [
+   "путешествия"
+  ],
+  "mindful": [
+   "по традиции джйотиш, детали зависят от школы"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ }
+]

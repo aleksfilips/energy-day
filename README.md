@@ -1,0 +1,36 @@
+# Энергия дня — личный лунный календарь
+
+Мини-приложение Telegram и PWA: лунные сутки для твоего места, фаза, знак, Луна без курса, затмения,
+«Энергия дня» с прозрачными правилами, дневник и личные закономерности. Всё считается на устройстве.
+
+```bash
+npm install
+npm run dev          # локально, http://localhost:5173
+npm test             # 400+ тестов: астрономия, сверка, контент, синтез, закономерности
+npm run build        # сборка в dist/
+npm run verify       # отчёт сверки с эталонами (см. VERIFICATION.md)
+npx tsx scripts/morning.ts --dry   # текст утреннего сообщения
+```
+
+## Устройство
+
+- `src/astro/` — слой А, факт: фазы, восходы, лунные сутки, знак, ингрессии, VOC, затмения, апсиды, титхи, накшатры, сад.
+- `src/content/` — слой Б, традиция: zod-схемы и JSON всех толкований, наложение правок.
+- `src/synthesis/` — модель дня и правила «Энергии дня».
+- `src/personal/` — личный день по нумерологии Л. Хей.
+- `src/diary/` — дневник, закономерности, экспорт.
+- `src/app/` — интерфейс (React + Tailwind), `src/telegram.ts` — связка с Telegram.
+- `DECISIONS.md` — методика и допущения. `VERIFICATION.md` — сверка с эталонами.
+
+## Публикация в Telegram (один раз)
+
+1. Репозиторий на GitHub → Settings → Pages → Source: **GitHub Actions**. После пуша в `main`
+   приложение появится по адресу `https://<логин>.github.io/<репозиторий>/`.
+2. В Telegram у [@BotFather](https://t.me/BotFather): `/newbot` → имя и логин бота → получишь токен.
+3. Там же: `/mybots` → бот → **Bot Settings → Menu Button** → вставь адрес из шага 1, подпись «Энергия дня».
+   Можно ещё `/newapp`, чтобы открывать приложение по прямой ссылке `t.me/<бот>/<app>`.
+4. Напиши боту `/start`. Узнай свой chat id (например, у @userinfobot).
+5. В репозитории → Settings → Secrets and variables → Actions:
+   - секреты: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, по желанию `BIRTH_DAY`, `BIRTH_MONTH`;
+   - переменные: `APP_URL` (адрес из шага 1), `LOCATION_NAME`, `LATITUDE`, `LONGITUDE`, `TIME_ZONE`.
+6. Actions → «Утреннее сообщение» → Run workflow — проверка. Дальше бот пишет каждый день в 07:30.

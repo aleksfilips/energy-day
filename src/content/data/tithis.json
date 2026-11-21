@@ -1,0 +1,482 @@
+[
+ {
+  "number": 1,
+  "name": "Пратипада",
+  "group": "nanda",
+  "essence": "1-я титхи, шукла-пакша (растущая Луна). Группа нанда — «радостная».",
+  "favorable": [
+   "радостные начинания и праздники"
+  ],
+  "mindful": [
+   "не перегружать день делами"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 2,
+  "name": "Двитья",
+  "group": "bhadra",
+  "essence": "2-я титхи, шукла-пакша (растущая Луна). Группа бхадра — «благая».",
+  "favorable": [
+   "устойчивые дела, работа, покупки"
+  ],
+  "mindful": [
+   "не спешить"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 3,
+  "name": "Тритья",
+  "group": "jaya",
+  "essence": "3-я титхи, шукла-пакша (растущая Луна). Группа джая — «победная».",
+  "favorable": [
+   "дела, где нужна победа, споры, соревнования"
+  ],
+  "mindful": [
+   "не переходить к давлению"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 4,
+  "name": "Чатуртхи",
+  "group": "rikta",
+  "essence": "4-я титхи, шукла-пакша (растущая Луна). Группа рикта — «пустая». Чатуртхи традиционно связывают с Ганешей, устраняющим препятствия.",
+  "favorable": [
+   "очищение, завершение, устранение помех"
+  ],
+  "mindful": [
+   "традиция не советует важных начинаний"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 5,
+  "name": "Панчами",
+  "group": "purna",
+  "essence": "5-я титхи, шукла-пакша (растущая Луна). Группа пурна — «полная».",
+  "favorable": [
+   "всё, что требует завершённости и полноты"
+  ],
+  "mindful": [
+   "знать меру"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 6,
+  "name": "Шаштхи",
+  "group": "nanda",
+  "essence": "6-я титхи, шукла-пакша (растущая Луна). Группа нанда — «радостная».",
+  "favorable": [
+   "радостные начинания и праздники"
+  ],
+  "mindful": [
+   "не перегружать день делами"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 7,
+  "name": "Саптами",
+  "group": "bhadra",
+  "essence": "7-я титхи, шукла-пакша (растущая Луна). Группа бхадра — «благая».",
+  "favorable": [
+   "устойчивые дела, работа, покупки"
+  ],
+  "mindful": [
+   "не спешить"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 8,
+  "name": "Аштами",
+  "group": "jaya",
+  "essence": "8-я титхи, шукла-пакша (растущая Луна). Группа джая — «победная». Аштами считается днём силы и усилий.",
+  "favorable": [
+   "дела, где нужна победа, споры, соревнования"
+  ],
+  "mindful": [
+   "не переходить к давлению"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 9,
+  "name": "Навами",
+  "group": "rikta",
+  "essence": "9-я титхи, шукла-пакша (растущая Луна). Группа рикта — «пустая».",
+  "favorable": [
+   "очищение, завершение, устранение помех"
+  ],
+  "mindful": [
+   "традиция не советует важных начинаний"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 10,
+  "name": "Дашами",
+  "group": "purna",
+  "essence": "10-я титхи, шукла-пакша (растущая Луна). Группа пурна — «полная».",
+  "favorable": [
+   "всё, что требует завершённости и полноты"
+  ],
+  "mindful": [
+   "знать меру"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 11,
+  "name": "Экадаши",
+  "group": "nanda",
+  "essence": "11-я титхи, шукла-пакша (растущая Луна). Группа нанда — «радостная». Экадаши — традиционный день поста и духовной практики.",
+  "favorable": [
+   "радостные начинания и праздники"
+  ],
+  "mindful": [
+   "не перегружать день делами"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 12,
+  "name": "Двадаши",
+  "group": "bhadra",
+  "essence": "12-я титхи, шукла-пакша (растущая Луна). Группа бхадра — «благая».",
+  "favorable": [
+   "устойчивые дела, работа, покупки"
+  ],
+  "mindful": [
+   "не спешить"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 13,
+  "name": "Трайодаши",
+  "group": "jaya",
+  "essence": "13-я титхи, шукла-пакша (растущая Луна). Группа джая — «победная».",
+  "favorable": [
+   "дела, где нужна победа, споры, соревнования"
+  ],
+  "mindful": [
+   "не переходить к давлению"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 14,
+  "name": "Чатурдаши",
+  "group": "rikta",
+  "essence": "14-я титхи, шукла-пакша (растущая Луна). Группа рикта — «пустая».",
+  "favorable": [
+   "очищение, завершение, устранение помех"
+  ],
+  "mindful": [
+   "традиция не советует важных начинаний"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 15,
+  "name": "Пурнима",
+  "group": "purna",
+  "essence": "15-я титхи, шукла-пакша (растущая Луна). Группа пурна — «полная». Пурнима — полнолуние, день полноты и благодарности.",
+  "favorable": [
+   "всё, что требует завершённости и полноты"
+  ],
+  "mindful": [
+   "знать меру"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 16,
+  "name": "Пратипада",
+  "group": "nanda",
+  "essence": "1-я титхи, кришна-пакша (убывающая Луна). Группа нанда — «радостная».",
+  "favorable": [
+   "радостные начинания и праздники"
+  ],
+  "mindful": [
+   "не перегружать день делами"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 17,
+  "name": "Двитья",
+  "group": "bhadra",
+  "essence": "2-я титхи, кришна-пакша (убывающая Луна). Группа бхадра — «благая».",
+  "favorable": [
+   "устойчивые дела, работа, покупки"
+  ],
+  "mindful": [
+   "не спешить"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 18,
+  "name": "Тритья",
+  "group": "jaya",
+  "essence": "3-я титхи, кришна-пакша (убывающая Луна). Группа джая — «победная».",
+  "favorable": [
+   "дела, где нужна победа, споры, соревнования"
+  ],
+  "mindful": [
+   "не переходить к давлению"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 19,
+  "name": "Чатуртхи",
+  "group": "rikta",
+  "essence": "4-я титхи, кришна-пакша (убывающая Луна). Группа рикта — «пустая».",
+  "favorable": [
+   "очищение, завершение, устранение помех"
+  ],
+  "mindful": [
+   "традиция не советует важных начинаний"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 20,
+  "name": "Панчами",
+  "group": "purna",
+  "essence": "5-я титхи, кришна-пакша (убывающая Луна). Группа пурна — «полная».",
+  "favorable": [
+   "всё, что требует завершённости и полноты"
+  ],
+  "mindful": [
+   "знать меру"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 21,
+  "name": "Шаштхи",
+  "group": "nanda",
+  "essence": "6-я титхи, кришна-пакша (убывающая Луна). Группа нанда — «радостная».",
+  "favorable": [
+   "радостные начинания и праздники"
+  ],
+  "mindful": [
+   "не перегружать день делами"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 22,
+  "name": "Саптами",
+  "group": "bhadra",
+  "essence": "7-я титхи, кришна-пакша (убывающая Луна). Группа бхадра — «благая».",
+  "favorable": [
+   "устойчивые дела, работа, покупки"
+  ],
+  "mindful": [
+   "не спешить"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 23,
+  "name": "Аштами",
+  "group": "jaya",
+  "essence": "8-я титхи, кришна-пакша (убывающая Луна). Группа джая — «победная».",
+  "favorable": [
+   "дела, где нужна победа, споры, соревнования"
+  ],
+  "mindful": [
+   "не переходить к давлению"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 24,
+  "name": "Навами",
+  "group": "rikta",
+  "essence": "9-я титхи, кришна-пакша (убывающая Луна). Группа рикта — «пустая».",
+  "favorable": [
+   "очищение, завершение, устранение помех"
+  ],
+  "mindful": [
+   "традиция не советует важных начинаний"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 25,
+  "name": "Дашами",
+  "group": "purna",
+  "essence": "10-я титхи, кришна-пакша (убывающая Луна). Группа пурна — «полная».",
+  "favorable": [
+   "всё, что требует завершённости и полноты"
+  ],
+  "mindful": [
+   "знать меру"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 26,
+  "name": "Экадаши",
+  "group": "nanda",
+  "essence": "11-я титхи, кришна-пакша (убывающая Луна). Группа нанда — «радостная».",
+  "favorable": [
+   "радостные начинания и праздники"
+  ],
+  "mindful": [
+   "не перегружать день делами"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 27,
+  "name": "Двадаши",
+  "group": "bhadra",
+  "essence": "12-я титхи, кришна-пакша (убывающая Луна). Группа бхадра — «благая».",
+  "favorable": [
+   "устойчивые дела, работа, покупки"
+  ],
+  "mindful": [
+   "не спешить"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 28,
+  "name": "Трайодаши",
+  "group": "jaya",
+  "essence": "13-я титхи, кришна-пакша (убывающая Луна). Группа джая — «победная».",
+  "favorable": [
+   "дела, где нужна победа, споры, соревнования"
+  ],
+  "mindful": [
+   "не переходить к давлению"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 29,
+  "name": "Чатурдаши",
+  "group": "rikta",
+  "essence": "14-я титхи, кришна-пакша (убывающая Луна). Группа рикта — «пустая».",
+  "favorable": [
+   "очищение, завершение, устранение помех"
+  ],
+  "mindful": [
+   "традиция не советует важных начинаний"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ },
+ {
+  "number": 30,
+  "name": "Амавасья",
+  "group": "purna",
+  "essence": "15-я титхи, кришна-пакша (убывающая Луна). Группа пурна — «полная». Амавасья — новолуние, день тишины и памяти предков.",
+  "favorable": [
+   "всё, что требует завершённости и полноты"
+  ],
+  "mindful": [
+   "знать меру"
+  ],
+  "school": "vedic",
+  "consensus": "medium",
+  "confidence": "medium",
+  "needsReview": true
+ }
+]
