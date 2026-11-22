@@ -1,28 +1,62 @@
-name: Утреннее сообщение
+name: Бот и утренние сообщения
 
+# Каждые 10 минут: ответить новым людям в боте и отправить утренние сообщения тем,
+# у кого по их местному времени наступило выбранное время. GitHub иногда запускает с опозданием.
 on:
   schedule:
-    - cron: '30 2 * * *'
+    - cron: '*/10 * * * *'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
+concurrency:
+  group: bot
+  cancel-in-progress: false
+
 jobs:
-  send:
+  bot:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      - run: npx tsx scripts/morning.ts
+      - run: npm ci --no-audit --no-fund
+
+      - name: Взять зашифрованный список подписчиков
+        run: |
+          mkdir -p bot-data
+          if git fetch --depth=1 origin bot-data 2>/dev/null; then
+            git show FETCH_HEAD:subscribers.enc > bot-data/subscribers.enc 2>/dev/null || rm -f bot-data/subscribers.enc
+          fi
+
+      - name: Бот
+        run: npx tsx scripts/bot.ts --data bot-data/subscribers.enc
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          BOT_DATA_KEY: ${{ secrets.BOT_DATA_KEY }}
           APP_URL: ${{ vars.APP_URL }}
+          # Перенос старой подписки владельца (используется один раз):
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           LOCATION_NAME: ${{ vars.LOCATION_NAME }}
           LATITUDE: ${{ vars.LATITUDE }}
           LONGITUDE: ${{ vars.LONGITUDE }}
           TIME_ZONE: ${{ vars.TIME_ZONE }}
           BIRTH_DAY: ${{ secrets.BIRTH_DAY }}
           BIRTH_MONTH: ${{ secrets.BIRTH_MONTH }}
+
+      - name: Сохранить список (только если изменился)
+        run: |
+          [ -f bot-data/subscribers.enc ] || exit 0
+          if git fetch --depth=1 origin bot-data 2>/dev/null && git show FETCH_HEAD:subscribers.enc 2>/dev/null | cmp -s - bot-data/subscribers.enc; then exit 0; fi
+          cd bot-data
+          git init -q
+          git checkout -q -b bot-data
+          git add subscribers.enc
+          git -c user.name="energy-day-bot" -c user.email="bot@users.noreply.github.com" commit -q -m "Данные бота (зашифровано)"
+          git push -q -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" bot-data
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
