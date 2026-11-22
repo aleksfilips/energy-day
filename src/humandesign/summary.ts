@@ -9,6 +9,7 @@ import { dayTransits, type DayTransits, type TransitWindow } from './transits';
 import { HD_BODY_NAMES } from './positions';
 import { CENTERS, channelKey, type Center } from './graph';
 import { formatTime, type DateKey } from '../astro/time';
+import { graphView, type GraphView } from './overlay';
 
 type Content = typeof content;
 const C: Content = content;
@@ -22,6 +23,11 @@ type GateInfo = { name: string; iching: string; gist: string };
 export const gateInfo = (g: number): GateInfo => C.gates[String(g) as keyof Content['gates']];
 const gateName = (g: number) => gateInfo(g).name;
 const centerInfo = (c: Center) => C.centers[c];
+/** Название центра для подписи. */
+export const centerTitle = (c: Center) => C.centers[c].name;
+export const REFLECTOR = C.reflector;
+/** Название канала по ключу «a-b». */
+export const channelTitle = (key: string) => C.channels[key as keyof Content['channels']]!.name;
 const channelInfo = (key: string) => C.channels[key as keyof Content['channels']];
 
 function when(windows: TransitWindow[], dayFrom: Date, dayTo: Date, tz: string): string {
@@ -147,13 +153,15 @@ export interface HdStory {
   /** Общий фон для всех людей: каналы, целиком собранные планетами. */
   shared: HdItem[];
   /** Как прожить день по своему типу. */
-  type: { name: string; strategy: string; authority: string; signature: string; notSelf: string };
+  type: { name: string; strategy: string; authority: string; signature: string; notSelf: string; purpose: string; profile: string; isReflector: boolean };
+  /** Что рисовать на бодиграфе. */
+  graph: GraphView;
 }
 
 const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 const upper = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-export function transitStory(chart: Bodygraph, t: DayTransits, tz: string): HdStory {
+export function transitStory(chart: Bodygraph, t: DayTransits, tz: string, now?: Date): HdStory {
   const mine: HdItem[] = [];
   const shared: HdItem[] = [];
   for (const ch of t.channels) {
@@ -198,6 +206,7 @@ export function transitStory(chart: Bodygraph, t: DayTransits, tz: string): HdSt
     mine,
     open,
     shared,
-    type: { name: type.name, strategy: type.strategy, authority: lower(C.authorities[chart.authority]), signature: type.signature, notSelf: type.notSelf },
+    type: { name: type.name, strategy: type.strategy, authority: lower(C.authorities[chart.authority]), signature: type.signature, notSelf: type.notSelf, purpose: type.purpose, profile: `${chart.profile[0]}/${chart.profile[1]}`, isReflector: chart.type === 'reflector' },
+    graph: graphView(chart, t, now),
   };
 }

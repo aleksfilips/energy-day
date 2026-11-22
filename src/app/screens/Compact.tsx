@@ -15,7 +15,6 @@ import { useStore } from '../store';
 import { LifeCard, ord, PersonalCard } from './DayParts';
 import { ABOUT, AREA_ABOUT, moodAbout, plainText, VERDICT_ABOUT } from '../../synthesis/explain';
 import type { EnergyCard } from '../../synthesis/rules';
-import { useHdStory, HdStoryView } from './HdCard';
 import { About, GoodBad, SubTitle, Tip } from './Explain';
 
 const SHORT: Record<AreaKey, string> = {
@@ -406,11 +405,10 @@ export function MoreTiles({
   onAllEvents: () => void;
   onWrite: () => void;
 }) {
-  const [sheet, setSheet] = useState<null | 'personal' | 'sign' | 'hd' | 'soon'>(null);
+  const [sheet, setSheet] = useState<null | 'personal' | 'sign' | 'soon'>(null);
   const tz = model.location.timeZone;
   const p = model.personal ? content.personal(model.personal.day) : null;
   const sg = content.sign(model.dominantSign);
-  const hd = useHdStory(model.date);
 
   const to = new Date(now.getTime() + 45 * A.MS_PER_DAY);
   const soon: { time: Date; title: string; angle: number | null }[] = [];
@@ -435,8 +433,7 @@ export function MoreTiles({
           />
         )}
         <Tile icon="🌙" title={`Луна ${A.inSign(model.dominantSign)}`} value={sg.coloring[0]!.toUpperCase() + sg.coloring.slice(1)} sub="что это значит ›" onClick={() => setSheet('sign')} />
-        {hd && <Tile icon="◈" title="Дизайн человека" value={`Тема дня: ${hd.theme.name}`} sub="что это значит ›" onClick={() => setSheet('hd')} />}
-        {first && <Tile wide={(Number(Boolean(p)) + 1 + Number(Boolean(hd))) % 2 === 0} icon={first.angle !== null ? <MiniMoon angle={first.angle} size={18} /> : '◆'} title="Скоро" value={first.title} sub={`${when(daysTo(first.time))}, ${humanDate(A.toDateKey(first.time, tz), false)}`} onClick={() => setSheet('soon')} />}
+        {first && <Tile wide={(Number(Boolean(p)) + 1) % 2 === 0} icon={first.angle !== null ? <MiniMoon angle={first.angle} size={18} /> : '◆'} title="Скоро" value={first.title} sub={`${when(daysTo(first.time))}, ${humanDate(A.toDateKey(first.time, tz), false)}`} onClick={() => setSheet('soon')} />}
         <Panel onClick={onWrite} className={cx('col-span-2 flex items-center gap-3 px-4 py-3.5')}>
           <span className="text-[18px]">✍️</span>
           <span className="min-w-0 flex-1">
@@ -452,9 +449,6 @@ export function MoreTiles({
       </Sheet>
       <Sheet open={sheet === 'sign'} onClose={() => setSheet(null)}>
         <LifeCard areas={lifeAreas} sign={model.dominantSign} content={content} />
-      </Sheet>
-      <Sheet open={sheet === 'hd'} onClose={() => setSheet(null)} title="Дизайн человека сегодня">
-        {hd && <HdStoryView story={hd} />}
       </Sheet>
       <Sheet open={sheet === 'soon'} onClose={() => setSheet(null)} title="Скоро">
         <div className="space-y-1">

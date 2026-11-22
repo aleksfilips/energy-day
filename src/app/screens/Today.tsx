@@ -8,6 +8,7 @@ import { useStore } from '../store';
 import { Card } from '../ui';
 import { WhySheet } from './EnergyCard';
 import { AreaGrid, DayStorySheet, HeroCard, MoreTiles, TimeStrip } from './Compact';
+import { HdSpotlight } from './HdCard';
 import type { Nav } from '../App';
 
 export function TodayScreen({ nav, openUpcoming }: { nav: Nav; openUpcoming: () => void }) {
@@ -56,6 +57,7 @@ export function TodayScreen({ nav, openUpcoming }: { nav: Nav; openUpcoming: () 
         onMore={() => setMore(true)}
       />
       <TimeStrip model={model} now={now} />
+      <HdSpotlight date={today} />
       <AreaGrid areas={extra.verdicts} lunarDay={model.dominant.number} />
       <MoreTiles
         model={model}

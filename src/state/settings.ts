@@ -22,6 +22,8 @@ export interface Settings {
   birthday: Birthday | null;
   /** Полные данные рождения для Дизайна человека (только на устройстве). */
   humanDesign: BirthData | null;
+  /** Решение, которое Рефлектор проживает лунный цикл (D-133). start — ISO-время начала. */
+  hdDecision: { title: string; start: string } | null;
   numerology: NumerologyOptions;
   theme: Theme;
   haptics: boolean;
@@ -46,6 +48,7 @@ export const DEFAULT_SETTINGS: Settings = {
   layers: { vedic: false, garden: false, personal: true },
   birthday: null,
   humanDesign: null,
+  hdDecision: null,
   numerology: { ...DEFAULT_NUMEROLOGY },
   theme: 'dark',
   haptics: true,
