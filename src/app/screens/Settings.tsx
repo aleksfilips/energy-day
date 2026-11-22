@@ -3,9 +3,16 @@ import { isResolved, type Location } from '../../astro/location';
 import { db } from '../../db';
 import { exportCsv, exportJson, importJson } from '../../diary/backup';
 import { cloudAvailable, cloudLoad, cloudSave, downloadText, haptic } from '../../telegram';
+import { clearCloudProfile } from '../../state/profile';
 import { useStore } from '../store';
 import { Button, Card, cx, Label, Segmented, Toggle } from '../ui';
 import type { Nav } from '../App';
+import { InviteCard } from './Invite';
+import { MorningCard } from './Morning';
+import { PlaceConfirm, PlaceSearch } from './PlaceSearch';
+import { placeToLocation } from './Profile';
+import type { Place } from '../../places/geocode';
+import { isValidTimeZone } from '../../places/timezone';
 
 const MONTH_NAMES = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 
@@ -35,7 +42,8 @@ export function BirthdayInput({ value, onChange }: { value: { day: number; month
 export function LocationsScreen({ nav }: { nav: Nav }) {
   const { settings, update } = useStore();
   const [editing, setEditing] = useState<Location | null>(null);
-  const [geoError, setGeoError] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [found, setFound] = useState<Place | null>(null);
 
   const choose = (id: string) => {
     haptic.select();
@@ -45,24 +53,11 @@ export function LocationsScreen({ nav }: { nav: Nav }) {
     void update((s) => ({ locations: s.locations.some((x) => x.id === l.id) ? s.locations.map((x) => (x.id === l.id ? l : x)) : [...s.locations, l] }));
     setEditing(null);
   };
-  const locate = () => {
-    setGeoError(null);
-    if (!navigator.geolocation) return setGeoError('Геолокация недоступна');
-    navigator.geolocation.getCurrentPosition(
-      (p) => {
-        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        setEditing({ id: `geo-${Date.now()}`, name: 'Где я сейчас', latitude: +p.coords.latitude.toFixed(4), longitude: +p.coords.longitude.toFixed(4), elevation: Math.max(0, Math.round(p.coords.altitude ?? 0)), timeZone: tz });
-      },
-      (e) => setGeoError(e.code === 1 ? 'Доступ к геолокации не разрешён' : 'Не удалось определить место'),
-      { enableHighAccuracy: false, timeout: 15000 },
-    );
-  };
-
   return (
     <div className="space-y-4 pb-8">
       <header className="pt-2">
-        <div className="font-display text-[26px] font-semibold">Локация</div>
-        <div className="text-[14px] text-muted">лунный день зависит от места: в поездке переключи</div>
+        <div className="font-display text-[26px] font-semibold">Место</div>
+        <div className="text-[14px] text-muted">лунный день зависит от места: в поездке добавь новое и выбери его</div>
       </header>
       <Card className="!py-1">
         {settings.locations.map((l) => (
@@ -74,7 +69,7 @@ export function LocationsScreen({ nav }: { nav: Nav }) {
                   {l.name}
                   {settings.homeLocationId === l.id && <span className="text-faint"> · дом</span>}
                 </span>
-                <span className="block text-[13px] text-muted">{isResolved(l) ? `${l.latitude.toFixed(2)}°, ${l.longitude.toFixed(2)}° · ${l.timeZone}` : 'нужны координаты'}</span>
+                <span className="block text-[13px] text-muted">{isResolved(l) ? (l.label ? l.label : `${l.latitude.toFixed(2)}°, ${l.longitude.toFixed(2)}°`) : 'нужны координаты'}</span>
               </span>
             </button>
             <button className="text-[14px] text-accent" onClick={() => setEditing(l)}>
@@ -83,15 +78,46 @@ export function LocationsScreen({ nav }: { nav: Nav }) {
           </div>
         ))}
       </Card>
-      <div className="grid grid-cols-2 gap-3">
-        <Button variant="ghost" onClick={locate}>
-          По геолокации
+      {!adding && !found && (
+        <Button className="w-full" onClick={() => setAdding(true)}>
+          Добавить место
         </Button>
-        <Button variant="ghost" onClick={() => setEditing({ id: `loc-${Date.now()}`, name: '', latitude: null, longitude: null, elevation: 0, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })}>
-          Новое место
-        </Button>
-      </div>
-      {geoError && <div className="text-center text-[14px] text-accent">{geoError}</div>}
+      )}
+      {adding && !found && (
+        <PlaceSearch
+          autoFocus
+          onPick={(p) => {
+            setFound(p);
+            setAdding(false);
+          }}
+        />
+      )}
+      {found && (
+        <div className="space-y-3">
+          <PlaceConfirm place={found} onChange={() => { setFound(null); setAdding(true); }} />
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              onClick={() => {
+                const l = placeToLocation(found);
+                void update((s) => ({ locations: [...s.locations, l], activeLocationId: l.id, homeLocationId: s.locations.some((x) => x.id === s.homeLocationId) ? s.homeLocationId : l.id }));
+                haptic.success();
+                setFound(null);
+              }}
+            >
+              Сохранить
+            </Button>
+            <Button variant="ghost" onClick={() => setFound(null)}>
+              Отмена
+            </Button>
+          </div>
+        </div>
+      )}
+      <button
+        className="w-full text-center text-[13px] text-faint"
+        onClick={() => setEditing({ id: `loc-${Date.now()}`, name: '', latitude: null, longitude: null, elevation: 0, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })}
+      >
+        Ввести координаты вручную
+      </button>
       {editing && <LocationEditor value={editing} onSave={saveLoc} onCancel={() => setEditing(null)} onHome={() => void update({ homeLocationId: editing.id })} onDelete={settings.locations.length > 1 ? () => {
         void update((s) => ({ locations: s.locations.filter((x) => x.id !== editing.id), activeLocationId: s.activeLocationId === editing.id ? s.homeLocationId : s.activeLocationId }));
         setEditing(null);
@@ -106,7 +132,7 @@ function LocationEditor({ value, onSave, onCancel, onDelete, onHome }: { value: 
   const [lon, setLon] = useState(value.longitude?.toString() ?? '');
   const la = Number(lat.replace(',', '.'));
   const lo = Number(lon.replace(',', '.'));
-  const valid = l.name.trim() && lat && lon && !isNaN(la) && !isNaN(lo) && Math.abs(la) <= 90 && Math.abs(lo) <= 180;
+  const valid = l.name.trim() && lat && lon && !isNaN(la) && !isNaN(lo) && Math.abs(la) <= 90 && Math.abs(lo) <= 180 && isValidTimeZone(l.timeZone.trim());
   const field = 'h-12 w-full rounded-xl bg-surface-2 px-4 text-[15px] outline-none placeholder:text-faint';
   return (
     <Card className="space-y-3">
@@ -122,7 +148,7 @@ function LocationEditor({ value, onSave, onCancel, onDelete, onHome }: { value: 
       </div>
       <div className="text-[12px] text-faint">Координаты в градусах, север и восток со знаком плюс. Часовой пояс — например Asia/Yekaterinburg или Europe/Moscow.</div>
       <div className="flex gap-2 pt-1">
-        <Button className="flex-1" disabled={!valid} onClick={() => onSave({ ...l, name: l.name.trim(), latitude: la, longitude: lo })}>
+        <Button className="flex-1" disabled={!valid} onClick={() => onSave({ ...l, name: l.name.trim(), timeZone: l.timeZone.trim(), latitude: la, longitude: lo })}>
           Сохранить
         </Button>
         <Button variant="ghost" onClick={onCancel}>
@@ -199,9 +225,13 @@ export function SettingsScreen({ nav }: { nav: Nav }) {
         <div className="font-display text-[28px] font-semibold">Ещё</div>
       </header>
 
+      <InviteCard />
+      <MorningCard />
+
       <Card className="!py-1">
         {[
-          ['locations', 'Локация', location?.name ?? 'не выбрана'],
+          ['profile', 'Мои данные', [settings.name, settings.birthday ? `${settings.birthday.day}.${String(settings.birthday.month).padStart(2, '0')}` : 'дата рождения не указана'].filter(Boolean).join(' · ')],
+          ['locations', 'Место', location?.name ?? 'не выбрано'],
           ['review', 'Ревизия контента', 'правка толкований'],
           ['help', 'Справка', 'как всё считается'],
         ].map(([name, title, sub]) => (
@@ -248,10 +278,8 @@ export function SettingsScreen({ nav }: { nav: Nav }) {
         </div>
       </Card>
 
-      <Card className="space-y-3">
+      <Card className="space-y-1">
         <Label>Личный день</Label>
-        <div className="text-[13px] text-muted">День и месяц рождения (хранится только на устройстве)</div>
-        <BirthdayInput value={settings.birthday} onChange={(b) => void update({ birthday: b })} />
         <Toggle label="Мастер-числа 11 и 22" hint="не сводить их к 2 и 4" checked={settings.numerology.masterNumbers} onChange={(v) => void update({ numerology: { ...settings.numerology, masterNumbers: v } })} />
         <Toggle label="Личный год с дня рождения" hint="иначе — с 1 января" checked={settings.numerology.yearSwitch === 'birthday'} onChange={(v) => void update({ numerology: { ...settings.numerology, yearSwitch: v ? 'birthday' : 'jan1' } })} />
       </Card>
@@ -264,7 +292,18 @@ export function SettingsScreen({ nav }: { nav: Nav }) {
 
       <Card className="space-y-3">
         <Label>Данные</Label>
-        <div className="text-[13px] leading-5 text-muted">Всё хранится на этом устройстве. Никакой аналитики и внешних запросов с твоими данными.</div>
+        <div className="text-[13px] leading-5 text-muted">Дневник и настройки хранятся на этом устройстве. Никакой аналитики. При поиске места название уходит в сервис карт (Open-Meteo или OpenStreetMap), больше ничего.</div>
+        {cloudAvailable() && (
+          <Toggle
+            label="Хранить мои данные в Telegram"
+            hint="имя, места и дата рождения в твоём личном облаке Telegram: на новом телефоне не придётся вводить заново. Дневник туда не попадает"
+            checked={settings.cloudProfile}
+            onChange={(v) => {
+              void update({ cloudProfile: v });
+              if (!v) void clearCloudProfile();
+            }}
+          />
+        )}
         <div className="grid grid-cols-2 gap-2">
           <Button variant="ghost" onClick={doExport}>
             Экспорт JSON
@@ -292,6 +331,7 @@ export function SettingsScreen({ nav }: { nav: Nav }) {
           className="pt-2 text-[13px] text-faint"
           onClick={async () => {
             if (!confirmDanger()) return setMsg('Нажми ещё раз в течение 4 секунд, чтобы стереть всё');
+            await clearCloudProfile();
             await db.delete();
             window.location.reload();
           }}

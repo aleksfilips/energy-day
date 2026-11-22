@@ -4,6 +4,7 @@ import { isResolved, type ResolvedLocation } from '../astro/location';
 import { applyOverrides, makeContent, type Content, type ContentOverride } from '../content';
 import { db } from '../db';
 import { DEFAULT_SETTINGS, migrateSettings, type Settings } from '../state/settings';
+import { saveCloudProfile } from '../state/profile';
 import { setHaptics, setTelegramColors, telegramColorScheme } from '../telegram';
 import type { DayOptions } from '../synthesis/day';
 
@@ -73,6 +74,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [theme]);
 
   useEffect(() => setHaptics(settings.haptics), [settings.haptics]);
+
+  // Копия профиля в личное облако Telegram (если включено), с небольшой паузой после изменений.
+  useEffect(() => {
+    if (!ready) return;
+    const t = setTimeout(() => void saveCloudProfile(settings), 1500);
+    return () => clearTimeout(t);
+  }, [ready, settings]);
 
   const value = useMemo(
     () => ({ ready, settings, update, content, overrides, location, dayOptions, theme }),

@@ -1,3 +1,4 @@
+import { EKB } from '../tests/astro/helpers';
 /**
  * Сверка с эталонами (этап 2). Запуск: npx tsx scripts/verify.ts
  * Печатает сводку и пишет fixtures/verification-results.json — из него собран VERIFICATION.md.
@@ -76,7 +77,7 @@ const results: Record<string, unknown> = {};
     };
   });
   // То же для Екатеринбурга — чтобы показать, насколько важна локация.
-  const ekb = A.requireResolved(A.LOCATION_PRESETS.find((l) => l.id === 'yekaterinburg')!);
+  const ekb = EKB;
   const ekbRows = calend.starts.map((s) => {
     const t = local(s.at, 'Europe/Moscow');
     const d = A.lunarDaysBetween(ekb, new Date(t.getTime() - 12 * 3_600_000), new Date(t.getTime() + 12 * 3_600_000)).find(

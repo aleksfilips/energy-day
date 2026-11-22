@@ -1,3 +1,4 @@
+import { KALINOVO } from './astro/helpers';
 import { describe, expect, it } from 'vitest';
 import * as A from '../src/astro';
 import data from '../src/content/data/lunar-areas.json';
@@ -5,7 +6,7 @@ import { computeDay } from '../src/synthesis/day';
 import { AREAS, dayAreas, dreamsVerdict, rawScore, verdictOf } from '../src/synthesis/areas';
 import { DEFAULT_NUMEROLOGY } from '../src/personal/numerology';
 
-const loc = A.requireResolved(A.LOCATION_PRESETS[0]!);
+const loc = KALINOVO;
 const opts = { daylight: { from: 7, to: 23 }, vocMode: 'modern' as const, zodiac: 'tropical' as const, vedic: false, garden: false, birthday: null, numerology: DEFAULT_NUMEROLOGY };
 
 describe('оценки сфер по лунным дням', () => {

@@ -1,3 +1,4 @@
+import { KALINOVO } from './astro/helpers';
 import { describe, expect, it } from 'vitest';
 import * as A from '../src/astro';
 import { makeContent } from '../src/content';
@@ -5,7 +6,7 @@ import { computeDay, computeMonth } from '../src/synthesis/day';
 import { synthesize, RULES_TEXT } from '../src/synthesis/rules';
 import { DEFAULT_NUMEROLOGY } from '../src/personal/numerology';
 
-const loc = A.requireResolved(A.LOCATION_PRESETS[0]!);
+const loc = KALINOVO;
 const opts = { daylight: { from: 7, to: 23 }, vocMode: 'modern' as const, zodiac: 'tropical' as const, vedic: true, garden: true, birthday: { day: 30, month: 6 }, numerology: DEFAULT_NUMEROLOGY };
 const content = makeContent();
 

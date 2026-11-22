@@ -1,10 +1,11 @@
+import { EKB } from '../tests/astro/helpers';
 import * as A from '../src/astro';
 import { makeContent } from '../src/content';
 import { computeDay } from '../src/synthesis/day';
 import { synthesize } from '../src/synthesis/rules';
 import { DEFAULT_NUMEROLOGY } from '../src/personal/numerology';
 const date = process.argv[2] ?? '2026-11-19';
-const loc = A.requireResolved(A.LOCATION_PRESETS[0]!);
+const loc = EKB;
 const day = computeDay(loc, date, { daylight: { from: 7, to: 23 }, vocMode: 'modern', zodiac: 'tropical', vedic: true, garden: true, birthday: { day: 30, month: 6 }, numerology: DEFAULT_NUMEROLOGY });
 const c = synthesize(day, makeContent());
 console.log(JSON.stringify({ ...c, why: c.why }, null, 1));

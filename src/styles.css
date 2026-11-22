@@ -23,6 +23,7 @@
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', Roboto, system-ui, sans-serif;
   --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, system-ui, sans-serif;
   --radius-card: 24px;
+  --font-serif: 'Cormorant Garamond', 'Cormorant', Georgia, 'Times New Roman', serif;
 }
 
 :root,
@@ -51,6 +52,10 @@
   --moon-dark: #2b3553;
   --shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 24px rgba(0, 0, 0, 0.18);
   --night: rgba(0, 0, 0, 0.22);
+  --hero-a: #1d2742;
+  --hero-b: #141b2e;
+  --hero-glow: rgba(236, 201, 143, 0.12);
+  --star: rgba(255, 248, 230, 0.75);
   color-scheme: dark;
 }
 
@@ -79,6 +84,10 @@
   --moon-dark: #e2dacb;
   --shadow: 0 1px 2px rgba(60, 40, 10, 0.05), 0 8px 24px rgba(60, 40, 10, 0.06);
   --night: rgba(60, 40, 10, 0.07);
+  --hero-a: #fffaf0;
+  --hero-b: #f3ead9;
+  --hero-glow: rgba(214, 168, 90, 0.18);
+  --star: rgba(176, 125, 46, 0.35);
   color-scheme: light;
 }
 
@@ -210,5 +219,37 @@ input[type='range']::-moz-range-thumb {
   .sheet-up,
   .fade-in {
     animation: none;
+  }
+}
+
+/* Герой «Сегодня»: ночное небо с мягким свечением и редкими звёздами. */
+.hero {
+  background:
+    radial-gradient(1.2px 1.2px at 78% 22%, var(--star) 50%, transparent 51%),
+    radial-gradient(1px 1px at 88% 58%, var(--star) 50%, transparent 51%),
+    radial-gradient(1.4px 1.4px at 64% 12%, var(--star) 50%, transparent 51%),
+    radial-gradient(1px 1px at 93% 34%, var(--star) 50%, transparent 51%),
+    radial-gradient(1px 1px at 55% 40%, var(--star) 50%, transparent 51%),
+    radial-gradient(90% 80% at 15% 20%, var(--hero-glow), transparent 70%),
+    linear-gradient(160deg, var(--hero-a), var(--hero-b));
+}
+
+.font-serif {
+  font-variant-numeric: lining-nums;
+  font-feature-settings: 'lnum' 1;
+}
+
+/* Маленький индикатор загрузки в поле поиска. */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  border: 2px solid var(--surface);
+  border-top-color: var(--accent);
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }

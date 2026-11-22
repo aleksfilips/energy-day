@@ -11,6 +11,8 @@ export interface Location {
   elevation: number;
   /** IANA-зона, например 'Asia/Yekaterinburg'. */
   timeZone: string;
+  /** Уточнение для человека: район, область, страна. */
+  label?: string;
 }
 
 /** Локация с введёнными координатами: только такую можно считать. */
@@ -19,22 +21,15 @@ export interface ResolvedLocation extends Location {
   longitude: number;
 }
 
-export const DEFAULT_TIME_ZONE = 'Asia/Yekaterinburg';
+export const DEFAULT_TIME_ZONE = 'Europe/Moscow';
 
 /**
- * Пресеты. Координаты Доброграда пока не заполнены: Александр введёт их
- * при первом запуске (или по геолокации).
- * Екатеринбург взят из ТЗ (раздел 10), Сочи — центр города.
+ * Готовых мест нет: каждый человек находит своё место поиском или по геолокации
+ * при первом запуске (D-120). Личных данных владельца в коде нет.
  */
-export const LOCATION_PRESETS: readonly Location[] = [
-  // Калиново, Невьянский ГО, Свердловская обл. Координаты — церковь Казанской иконы в посёлке (sobory.ru).
-  { id: 'kalinovo', name: 'Калиново', latitude: 57.1401, longitude: 60.1476, elevation: 0, timeZone: 'Asia/Yekaterinburg' },
-  { id: 'sochi', name: 'Сочи', latitude: 43.5855, longitude: 39.7231, elevation: 0, timeZone: 'Europe/Moscow' },
-  { id: 'dobrograd', name: 'Доброград', latitude: null, longitude: null, elevation: 0, timeZone: 'Europe/Moscow' },
-  { id: 'yekaterinburg', name: 'Екатеринбург', latitude: 56.84, longitude: 60.61, elevation: 0, timeZone: 'Asia/Yekaterinburg' },
-];
+export const LOCATION_PRESETS: readonly Location[] = [];
 
-export const DEFAULT_LOCATION_ID = 'kalinovo';
+export const DEFAULT_LOCATION_ID = '';
 
 export function isResolved(loc: Location): loc is ResolvedLocation {
   return loc.latitude !== null && loc.longitude !== null;

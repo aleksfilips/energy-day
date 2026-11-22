@@ -1,3 +1,4 @@
+import { KALINOVO } from './astro/helpers';
 import { describe, expect, it } from 'vitest';
 import { Body, Equator, Horizon, Observer } from 'astronomy-engine';
 import * as A from '../src/astro';
@@ -8,7 +9,7 @@ import { dayMood, dayPlan, goodWindows, LIFE_AREAS, LIFE_TABLE, lifeAreas, vocIn
 import { DEFAULT_NUMEROLOGY } from '../src/personal/numerology';
 import { MURMANSK } from './astro/helpers';
 
-const loc = A.requireResolved(A.LOCATION_PRESETS[0]!);
+const loc = KALINOVO;
 const opts = { daylight: { from: 7, to: 23 }, vocMode: 'modern' as const, zodiac: 'tropical' as const, vedic: false, garden: false, birthday: null, numerology: DEFAULT_NUMEROLOGY };
 const content = makeContent();
 

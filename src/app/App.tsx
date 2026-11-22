@@ -10,6 +10,7 @@ import { DayScreen } from './screens/Day';
 import { DiaryScreen, EntryScreen } from './screens/Diary';
 import { HelpScreen } from './screens/Help';
 import { Onboarding } from './screens/Onboarding';
+import { ProfileScreen } from './screens/Profile';
 import { ReviewScreen } from './screens/Review';
 import { LocationsScreen, SettingsScreen } from './screens/Settings';
 import { TodayScreen } from './screens/Today';
@@ -20,6 +21,7 @@ export type Route =
   | { name: 'day'; date: DateKey }
   | { name: 'entry'; date: DateKey }
   | { name: 'locations' }
+  | { name: 'profile' }
   | { name: 'review' }
   | { name: 'help' };
 
@@ -116,6 +118,8 @@ export function App() {
         <EntryScreen key={top.date} date={top.date} nav={nav} />
       ) : top.name === 'locations' ? (
         <LocationsScreen nav={nav} />
+      ) : top.name === 'profile' ? (
+        <ProfileScreen nav={nav} />
       ) : top.name === 'review' ? (
         <ReviewScreen nav={nav} />
       ) : (

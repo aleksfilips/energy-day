@@ -1,7 +1,8 @@
+import { EKB } from '../tests/astro/helpers';
 // Быстрый вывод данных на дату: npx tsx scripts/today.ts 2026-11-19 [locationId]
 import * as A from '../src/astro';
-const date = process.argv[2] ?? A.toDateKey(new Date(), A.DEFAULT_TIME_ZONE);
-const loc = A.requireResolved(A.LOCATION_PRESETS.find((l) => l.id === (process.argv[3] ?? 'yekaterinburg'))!);
+const date = process.argv[2] ?? A.toDateKey(new Date(), EKB.timeZone);
+const loc = EKB;
 const tz = loc.timeZone;
 const { start, end } = A.dayBounds(date, tz);
 const noon = new Date((start.getTime() + end.getTime()) / 2);
