@@ -123,7 +123,7 @@ export function App() {
       ) : top.name === 'review' ? (
         <ReviewScreen nav={nav} />
       ) : (
-        <HelpScreen />
+        <HelpScreen onReview={() => nav.push({ name: 'review' })} />
       );
   } else {
     screen =

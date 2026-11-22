@@ -1,7 +1,23 @@
 import { SCHOOL_NAMES } from '../../content/schema';
 import { Card, Disclosure } from '../ui';
+import { ABOUT, VERDICT_ABOUT } from '../../synthesis/explain';
 
-export function HelpScreen() {
+const BLOCKS: [string, string][] = [
+  ['Лунный день', ABOUT.lunarDay],
+  ['Настроение дня', ABOUT.mood],
+  ['Фаза Луны', ABOUT.phase],
+  ['Знак Луны', ABOUT.sign],
+  ['Время дня', ABOUT.goodTime],
+  ['Луна без курса', ABOUT.voc],
+  ['Сферы дня', `${ABOUT.areas} ${VERDICT_ABOUT.good} ${VERDICT_ABOUT.neutral} ${VERDICT_ABOUT.bad}`],
+  ['Сны', ABOUT.dreams],
+  ['Личный день', ABOUT.personal],
+  ['Дизайн человека', ABOUT.hd],
+  ['Скоро', ABOUT.soon],
+  ['Вопрос дня', ABOUT.question],
+];
+
+export function HelpScreen({ onReview }: { onReview?: () => void }) {
   return (
     <div className="space-y-4 pb-10">
       <header className="pt-2">
@@ -9,7 +25,17 @@ export function HelpScreen() {
         <div className="text-[14px] text-muted">факт отдельно, традиция отдельно</div>
       </header>
       <Card className="!py-1">
-        <Disclosure title="Факт и традиция" defaultOpen>
+        <Disclosure title="Что значит каждый блок" defaultOpen>
+          <div className="space-y-3 text-[15px] leading-6">
+            {BLOCKS.map(([t, x]) => (
+              <p key={t}>
+                <b className="font-medium">{t}.</b> {x}
+              </p>
+            ))}
+            <p className="text-muted">На главном экране почти всё нажимается: под каждым блоком — подробное объяснение на сегодня.</p>
+          </div>
+        </Disclosure>
+        <Disclosure title="Факт и традиция">
           <div className="space-y-3 text-[15px] leading-6">
             <p>В приложении два слоя, и они не смешиваются.</p>
             <p>
@@ -54,7 +80,7 @@ export function HelpScreen() {
               <b className="font-medium">{SCHOOL_NAMES.western}</b> — фазы, Луна в знаках, Луна без курса.
             </p>
             <p>
-              <b className="font-medium">{SCHOOL_NAMES.vedic}</b> — титхи и накшатры.
+              <b className="font-medium">{SCHOOL_NAMES.vedic}</b> — титхи и накшатры. В приложении этот слой не показывается: у него своя система лунных дней, и она путала бы с нашей.
             </p>
             <p>
               <b className="font-medium">{SCHOOL_NAMES.folk}</b> — бытовые советы, всегда с пометкой.
@@ -73,6 +99,11 @@ export function HelpScreen() {
         </Disclosure>
       </Card>
       <p className="px-1 text-center text-[12px] text-faint">Лунный календарь — ориентир для внимания. Решение принимаешь ты.</p>
+      {onReview && (
+        <button onClick={onReview} className="mx-auto block py-2 text-[12px] text-faint underline decoration-dotted underline-offset-4">
+          Для автора: проверка и правка толкований
+        </button>
+      )}
     </div>
   );
 }

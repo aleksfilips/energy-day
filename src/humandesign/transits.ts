@@ -10,7 +10,46 @@
 import { activationsAt, type Bodygraph, type BodyActivation } from './chart';
 import { CENTERS, definedCenters, definedChannels, channelKey, type Center } from './graph';
 import type { HdBody } from './positions';
+import { GATE_ORDER } from './wheel';
 import { dayBounds, type DateKey } from '../astro/time';
+import ingress from './data/ingress.json';
+
+/**
+ * Моменты смены ворот Меркурия…Плутона и узлов — из таблицы Swiss Ephemeris (scripts/gen-ingress.py).
+ * Наш астрономический движок ошибается на несколько угловых секунд; у быстрых тел это ±1 минута,
+ * а у медленных планет у станции — до нескольких часов. Таблица убирает эту разницу (D-131).
+ */
+const ING_FROM = Date.parse(ingress.from);
+const ING_TO = Date.parse(ingress.to);
+const ING = ingress.bodies as Partial<Record<HdBody, [number, number][]>>;
+
+/** Ворота тела по таблице или null, если тело/дата вне таблицы. */
+export function tableGate(body: HdBody, date: Date): number | null {
+  const rows = ING[body];
+  const t = date.getTime();
+  if (!rows || t < ING_FROM || t >= ING_TO) return null;
+  const sec = (t - ING_FROM) / 1000;
+  let lo = 0;
+  let hi = rows.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (rows[mid]![0] <= sec) lo = mid;
+    else hi = mid - 1;
+  }
+  return rows[lo]![1];
+}
+
+/** Положения тел для транзитов: ворота медленных тел уточнены по таблице Swiss Ephemeris. */
+export function transitActivationsAt(date: Date): BodyActivation[] {
+  return activationsAt(date).map((a) => {
+    const g = tableGate(a.body, date);
+    if (g === null || g === a.gate) return a;
+    // Тело у самой границы ворот: по таблице оно уже (или ещё) в соседних воротах.
+    const i = GATE_ORDER.indexOf(a.gate);
+    const forward = GATE_ORDER[(i + 1) % 64] === g;
+    return { ...a, gate: g, line: forward ? 1 : 6, marginDeg: 0 };
+  });
+}
 
 export interface TransitSegment {
   from: Date;
@@ -64,25 +103,25 @@ const gateSig = (acts: BodyActivation[]) => acts.map((a) => a.gate).join(',');
 export function transitSegments(from: Date, to: Date): TransitSegment[] {
   const segs: TransitSegment[] = [];
   let segStart = from;
-  let cur = activationsAt(from);
+  let cur = transitActivationsAt(from);
   let t = from.getTime();
   while (t < to.getTime()) {
     const next = Math.min(t + STEP_MS, to.getTime());
-    const nextActs = activationsAt(new Date(next));
+    const nextActs = transitActivationsAt(new Date(next));
     if (gateSig(nextActs) !== gateSig(cur)) {
       // Уточняем момент смены делением пополам до минуты.
       let lo = t;
       let hi = next;
-      while (hi - lo > 30_000) {
+      while (hi - lo > 5_000) {
         const mid = (lo + hi) / 2;
-        if (gateSig(activationsAt(new Date(mid))) === gateSig(cur)) lo = mid;
+        if (gateSig(transitActivationsAt(new Date(mid))) === gateSig(cur)) lo = mid;
         else hi = mid;
       }
-      // hi — первый момент уже с новыми воротами (точность ±30 с).
+      // hi — первый момент уже с новыми воротами (точность ±5 с).
       const change = new Date(hi);
       segs.push({ from: segStart, to: change, activations: cur });
       segStart = change;
-      cur = activationsAt(change);
+      cur = transitActivationsAt(change);
       // Если за этот шаг сменилось несколько ворот, следующий проход их тоже найдёт.
       t = change.getTime();
       continue;
@@ -135,7 +174,7 @@ export function transitsBetween(chart: Bodygraph, from: Date, to: Date): DayTran
     }
   }
 
-  const mid = activationsAt(new Date((from.getTime() + to.getTime()) / 2));
+  const mid = transitActivationsAt(new Date((from.getTime() + to.getTime()) / 2));
   return {
     from,
     to,

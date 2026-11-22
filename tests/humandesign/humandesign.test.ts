@@ -5,7 +5,7 @@ import { CENTER_GATES, CHANNELS, GATE_CENTER, CENTERS, channelCenters, definedCh
 import { hdLongitude, designMoment, type HdBody } from '../../src/humandesign/positions';
 import { bodygraphFromUtc, hdType, hdAuthority, type Bodygraph } from '../../src/humandesign/chart';
 import { transitsBetween, transitSegments } from '../../src/humandesign/transits';
-import { transitLines, hdProfileLines } from '../../src/humandesign/summary';
+import { transitLines, hdProfileLines, transitStory } from '../../src/humandesign/summary';
 import { planetLongitude } from '../../src/astro/bodies';
 import content from '../../src/content/data/humandesign.json';
 
@@ -62,7 +62,7 @@ describe('схема бодиграфа', () => {
     expect(chs.map((c) => c.join('-')).sort()).toEqual(['10-20', '10-34', '10-57', '20-34', '20-57', '34-57']);
   });
   it('тексты есть для всех ворот, каналов и центров', () => {
-    for (let g = 1; g <= 64; g++) expect((content.gates as Record<string, string>)[String(g)]).toBeTruthy();
+    for (let g = 1; g <= 64; g++) expect((content.gates as Record<string, { name: string; iching: string; gist: string }>)[String(g)]).toMatchObject({ name: expect.any(String), iching: expect.any(String), gist: expect.any(String) });
     for (const ch of CHANNELS) expect((content.channels as Record<string, unknown>)[ch.join('-')]).toBeTruthy();
     for (const c of CENTERS) expect(content.centers[c].transit).toBeTruthy();
   });
@@ -158,6 +158,14 @@ describe('бодиграф и транзиты', () => {
     const lines = transitLines(g, t, 'Asia/Yekaterinburg');
     expect(lines[0]).toMatch(/^Тема дня для всех: ворота \d+/);
     for (const l of lines) expect(l).not.toMatch(/undefined|NaN/);
+  });
+  it('разбор транзитов по смыслу: тема, в тебе, извне, фон, стратегия типа', () => {
+    const t = transitsBetween(g, new Date('2026-11-21T00:00:00Z'), new Date('2026-11-22T00:00:00Z'));
+    const st = transitStory(g, t, 'Asia/Yekaterinburg');
+    expect(st.theme.name).toBeTruthy();
+    expect(st.type.strategy).toBeTruthy();
+    expect(st.mine.length + st.open.length + st.shared.length).toBeGreaterThan(0);
+    for (const x of [...st.mine, ...st.open, ...st.shared]) expect(JSON.stringify(x)).not.toMatch(/undefined|NaN/);
   });
   it('описание бодиграфа без пропусков', () => {
     for (const l of hdProfileLines(g)) expect(l).not.toMatch(/undefined|NaN/);

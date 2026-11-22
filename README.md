@@ -12,7 +12,7 @@ npm run dev          # локально, http://localhost:5173
 npm test             # 400+ тестов: астрономия, сверка, контент, синтез, закономерности
 npm run build        # сборка в dist/
 npm run verify       # отчёт сверки с эталонами (см. VERIFICATION.md)
-npx tsx scripts/morning.ts 57.13 60.15 Asia/Yekaterinburg 30.06   # текст утреннего сообщения
+npx tsx scripts/morning.ts 57.13 60.15 Asia/Yekaterinburg 15.03   # текст утреннего сообщения
 ```
 
 ## Устройство

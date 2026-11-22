@@ -156,6 +156,12 @@ export const PersonalNumberEntry = z.object({
   /** Одна фраза для карточки «Энергия дня». */
   note: nonEmpty,
   favorable: z.array(nonEmpty).min(1),
+  /** Что значит этот день простыми словами (2–3 фразы). */
+  about: nonEmpty,
+  /** Чего лучше избегать. */
+  mindful: z.array(nonEmpty).min(1),
+  /** Один практический совет на день. */
+  tip: nonEmpty,
   color: z.object({ name: nonEmpty, hex: z.string().regex(/^#[0-9a-fA-F]{6}$/) }),
   affirmation: nonEmpty,
   ...Meta,

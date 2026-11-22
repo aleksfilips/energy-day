@@ -232,8 +232,7 @@ export function SettingsScreen({ nav }: { nav: Nav }) {
         {[
           ['profile', 'Мои данные', [settings.name, settings.birthday ? `${settings.birthday.day}.${String(settings.birthday.month).padStart(2, '0')}` : 'дата рождения не указана'].filter(Boolean).join(' · ')],
           ['locations', 'Место', location?.name ?? 'не выбрано'],
-          ['review', 'Ревизия контента', 'правка толкований'],
-          ['help', 'Справка', 'как всё считается'],
+          ['help', 'Справка', 'что значит каждый блок и как всё считается'],
         ].map(([name, title, sub]) => (
           <button key={name} className="flex w-full items-center justify-between border-t border-line py-4 text-left first:border-t-0" onClick={() => nav.push({ name: name as 'help' })}>
             <span>
@@ -246,10 +245,9 @@ export function SettingsScreen({ nav }: { nav: Nav }) {
       </Card>
 
       <Card>
-        <Label className="mb-1">Слои</Label>
-        <Toggle label="Мой личный день" hint="нумерология по Л. Хей" checked={settings.layers.personal} onChange={(v) => void update({ layers: { ...settings.layers, personal: v } })} />
-        <Toggle label="Индийский календарь" hint="лунный день и звезда дня по индийской традиции" checked={settings.layers.vedic} onChange={(v) => void update({ layers: { ...settings.layers, vedic: v } })} />
-        <Toggle label="Календарь садовода" hint="дни корня, листа, цветка и плода по Марии Тун" checked={settings.layers.garden} onChange={(v) => void update({ layers: { ...settings.layers, garden: v } })} />
+        <Label className="mb-1">Дополнительно показывать</Label>
+        <Toggle label="Мой личный день" hint="число дня по твоей дате рождения (нумерология)" checked={settings.layers.personal} onChange={(v) => void update({ layers: { ...settings.layers, personal: v } })} />
+        <Toggle label="Календарь садовода" hint="дни корня, листа, цветка и плода по Марии Тун — в «Весь день подробно»" checked={settings.layers.garden} onChange={(v) => void update({ layers: { ...settings.layers, garden: v } })} />
       </Card>
 
       <Card className="space-y-4">

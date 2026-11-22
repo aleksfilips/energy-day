@@ -14,6 +14,7 @@ import type { Tone } from '../content/schema';
 import lifeData from '../content/data/life-areas.json';
 import type { DayModel } from './day';
 import type { EnergyCard } from './rules';
+import { plainText } from './explain';
 
 export type LifeAreaKey = 'work' | 'money' | 'health' | 'people' | 'home';
 
@@ -141,11 +142,13 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export function dayPlan(day: DayModel, card: EnergyCard, content: Content): DayPlan {
   const ld = content.lunarDay(day.dominant.number);
-  const first = ld.essence.split('. ')[0]!.replace(/\.$/, '') + '.';
+  // Весь смысл лунного дня (обычно две фразы): одной фразы вроде «День призыва» мало, чтобы понять день.
+  // Фаза добавляется только в дни новолуния и полнолуния, в остальные она видна рядом («Луна растёт»).
+  const special = day.quarters.some((q) => q.quarter === 0 || q.quarter === 2);
   return {
     mood: dayMood(card.tone.value),
     lunarDay: day.dominant.number,
-    headline: `${first} ${PHASE_SIMPLE(day)}`,
+    headline: special ? `${plainText(ld.essence)} ${PHASE_SIMPLE(day)}` : plainText(ld.essence),
     doList: ld.favorable.slice(0, 3).map(cap),
     avoidList: ld.mindful.slice(0, 2).map(cap),
     practice: ld.practice,

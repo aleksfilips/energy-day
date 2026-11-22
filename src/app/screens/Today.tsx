@@ -7,8 +7,7 @@ import { useDay, useNow, useToday } from '../hooks';
 import { useStore } from '../store';
 import { Card } from '../ui';
 import { WhySheet } from './EnergyCard';
-import { AreaGrid, HeroCard, MoreTiles, TimeStrip } from './Compact';
-import { useHdLines } from './HdCard';
+import { AreaGrid, DayStorySheet, HeroCard, MoreTiles, TimeStrip } from './Compact';
 import type { Nav } from '../App';
 
 export function TodayScreen({ nav, openUpcoming }: { nav: Nav; openUpcoming: () => void }) {
@@ -16,8 +15,8 @@ export function TodayScreen({ nav, openUpcoming }: { nav: Nav; openUpcoming: () 
   const today = useToday();
   const now = useNow();
   const data = useDay(today);
-  const hd = useHdLines(today);
   const [why, setWhy] = useState(false);
+  const [more, setMore] = useState(false);
   const extra = useMemo(() => (data ? { plan: dayPlan(data.model, data.card, content), areas: lifeAreas(data.model), verdicts: dayAreas(data.model) } : null), [data, content]);
   if (!location || !data || !extra) return null;
   const { model, card } = data;
@@ -54,6 +53,7 @@ export function TodayScreen({ nav, openUpcoming }: { nav: Nav; openUpcoming: () 
         next={endsToday ? (current.number + 1 > current.totalInCycle ? 1 : current.number + 1) : null}
         now={now}
         onWhy={() => setWhy(true)}
+        onMore={() => setMore(true)}
       />
       <TimeStrip model={model} now={now} />
       <AreaGrid areas={extra.verdicts} lunarDay={model.dominant.number} />
@@ -62,7 +62,6 @@ export function TodayScreen({ nav, openUpcoming }: { nav: Nav; openUpcoming: () 
         content={content}
         lifeAreas={extra.areas}
         plan={extra.plan}
-        hd={hd}
         now={now}
         onOpenDay={(d) => nav.push({ name: 'day', date: d })}
         onAllEvents={openUpcoming}
@@ -72,6 +71,7 @@ export function TodayScreen({ nav, openUpcoming }: { nav: Nav; openUpcoming: () 
       <button onClick={() => nav.push({ name: 'day', date: today })} className="mx-auto block py-2 text-[15px] text-accent">
         Весь день подробно ›
       </button>
+      <DayStorySheet open={more} onClose={() => setMore(false)} onWhy={() => setWhy(true)} model={model} plan={extra.plan} card={card} content={content} current={current.number} />
       <WhySheet card={card} model={model} open={why} onClose={() => setWhy(false)} />
     </div>
   );

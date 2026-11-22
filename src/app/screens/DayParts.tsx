@@ -8,6 +8,9 @@ import { AREAS_SOURCE, dreamsVerdict, type AreaVerdict, type Verdict } from '../
 import { goodWindows, spanText, vocInDaylight, type DayPlan, type LifeArea } from '../../synthesis/life';
 import { humanDate, humanIn, plural } from '../format';
 import { Card, cx, MiniMoon, Moon } from '../ui';
+import { useStore } from '../store';
+import { ABOUT, personalStory } from '../../synthesis/explain';
+import { About, GoodBad, SubTitle, Tip } from './Explain';
 
 export const ord = (n: number) => `${n}-й`;
 
@@ -220,8 +223,9 @@ function Row({ dot, children }: { dot: string; children: ReactNode }) {
   );
 }
 
-export function LifeCard({ areas, sign, collapsed = false }: { areas: LifeArea[]; sign: A.Sign; collapsed?: boolean }) {
+export function LifeCard({ areas, sign, collapsed = false, content }: { areas: LifeArea[]; sign: A.Sign; collapsed?: boolean; content?: Content }) {
   const [open, setOpen] = useState(!collapsed);
+  const sg = content?.sign(sign);
   return (
     <Section
       title={`Луна ${A.inSign(sign)}: подсказки`}
@@ -237,6 +241,14 @@ export function LifeCard({ areas, sign, collapsed = false }: { areas: LifeArea[]
         </button>
       ) : (
       <>
+      {sg && (
+        <div className="mb-5 space-y-4">
+          <p className="text-[16px] leading-6">{sg.essence} Луна добавляет дню {sg.coloring}.</p>
+          <GoodBad good={sg.favorable} bad={sg.mindful} goodTitle="Хорошо для" badTitle="Осторожно" />
+          <About>{ABOUT.sign}</About>
+          <div className="pt-1 text-[15px] font-semibold">По сферам жизни</div>
+        </div>
+      )}
       <div className="divide-y divide-[var(--line)]">
         {areas.map((a) => (
           <div key={a.key} className="py-3.5 first:pt-0 last:pb-0">
@@ -263,23 +275,43 @@ export function LifeCard({ areas, sign, collapsed = false }: { areas: LifeArea[]
   );
 }
 
-export function PersonalCard({ model, content }: { model: DayModel; content: Content }) {
-  if (!model.personal) return null;
-  const p = content.personal(model.personal.day);
-  return (
-    <Card className="rise-in flex items-start gap-4">
-      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-display text-[22px] font-medium text-white" style={{ background: p.color.hex }}>
-        {model.personal.day}
-      </span>
-      <div>
-        <div className="text-[14px] font-medium text-muted">Твой личный день · цвет {p.color.name}</div>
-        <p className="mt-1 text-[16px] leading-6">
-          {p.essence} Хорошо: {p.favorable.join(', ')}.
-        </p>
-        <p className="mt-2 text-[15px] italic leading-6 text-silver">«{p.affirmation}»</p>
+export function PersonalCard({ model, content, bare = false }: { model: DayModel; content: Content; bare?: boolean }) {
+  const { settings } = useStore();
+  const st = personalStory(model, content, settings.birthday);
+  if (!st) return null;
+  const body = (
+    <div className="space-y-5">
+      <div className="flex items-center gap-4">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full font-serif text-[28px] font-medium text-white" style={{ background: st.colorHex, boxShadow: `0 0 28px ${st.colorHex}55` }}>
+          {st.number}
+        </span>
+        <div>
+          <div className="font-serif text-[24px] font-medium leading-tight">Твой личный день — {st.number}</div>
+          <div className="text-[14px] text-muted">цвет дня — {st.colorName}</div>
+        </div>
       </div>
-    </Card>
+      <div>
+        <SubTitle>Что значит день {st.number}</SubTitle>
+        <p className="text-[16px] leading-6">{st.about}</p>
+      </div>
+      <GoodBad good={st.favorable} bad={st.mindful} badTitle="Не стоит" />
+      <Tip>{st.tip}</Tip>
+      <About>{ABOUT.personal}</About>
+      <div>
+        <SubTitle>Как получилось число {st.number}</SubTitle>
+        <ul className="space-y-1.5 text-[14px] leading-5 text-muted">
+          {st.steps.map((x) => (
+            <li key={x} className="flex gap-2">
+              <span className="text-faint">·</span>
+              {x}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <p className="text-[15px] italic leading-6 text-silver">«{st.affirmation}» — фраза-настрой на день.</p>
+    </div>
   );
+  return bare ? body : <Card className="rise-in">{body}</Card>;
 }
 
 export function QuestionCard({ plan, onWrite }: { plan: DayPlan; onWrite: () => void }) {
@@ -339,8 +371,8 @@ export function SoonCard({ now, tz, onOpen, onAll }: { now: Date; tz: string; on
 
 const VERDICT: Record<Verdict, { title: string; color: string; soft: string; mark: string }> = {
   good: { title: 'Благоприятно', color: 'var(--good)', soft: 'var(--good-soft)', mark: '✓' },
-  neutral: { title: 'Нейтрально', color: 'var(--accent)', soft: 'var(--accent-soft)', mark: '~' },
-  bad: { title: 'Лучше не стоит', color: 'var(--care)', soft: 'var(--care-soft)', mark: '✕' },
+  neutral: { title: 'Нейтрально', color: 'var(--silver)', soft: 'var(--surface-2)', mark: '~' },
+  bad: { title: 'Лучше не стоит', color: 'var(--bad)', soft: 'var(--bad-soft)', mark: '✕' },
 };
 
 /** Таблица сфер на лунный день: сначала благоприятное, потом нейтральное (свёрнуто), потом то, чего лучше избегать. */

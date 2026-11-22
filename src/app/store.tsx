@@ -55,7 +55,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       daylight: settings.daylight,
       vocMode: settings.vocMode,
       zodiac: settings.zodiac,
-      vedic: settings.layers.vedic,
+      // Индийский календарь (титхи, накшатры) убран из приложения 22.11.2026: другая система лунных дней путала (D-130).
+      vedic: false,
       garden: settings.layers.garden,
       birthday: settings.layers.personal ? settings.birthday : null,
       numerology: settings.numerology,

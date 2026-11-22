@@ -16,6 +16,8 @@
   --color-good-soft: var(--good-soft);
   --color-care: var(--care);
   --color-care-soft: var(--care-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
   --color-tone-active: var(--tone-active);
   --color-tone-transition: var(--tone-transition);
   --color-tone-calm: var(--tone-calm);
@@ -44,6 +46,8 @@
   --good-soft: rgba(159, 207, 166, 0.13);
   --care: #f0b48a;
   --care-soft: rgba(240, 180, 138, 0.13);
+  --bad: #ff6b6b;
+  --bad-soft: rgba(255, 107, 107, 0.16);
   --tone-active: #ecc98f;
   --tone-transition: #c4cad8;
   --tone-calm: #8fb3d9;
@@ -76,6 +80,8 @@
   --good-soft: rgba(63, 125, 74, 0.1);
   --care: #b4602c;
   --care-soft: rgba(180, 96, 44, 0.1);
+  --bad: #c9302c;
+  --bad-soft: rgba(201, 48, 44, 0.1);
   --tone-active: #c48a35;
   --tone-transition: #8b9099;
   --tone-calm: #5f87b4;

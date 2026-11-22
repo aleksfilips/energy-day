@@ -85,6 +85,24 @@ describe('логика бота', () => {
       expect(morningText({ loc: { id: 'x', name: '', latitude: lat, longitude: lon, elevation: 0, timeZone: tz }, date: '2026-12-21', birthday: null }).length).toBeGreaterThan(100);
     }
   });
+  it('напутствие понятное и полное: что значит день, что делать, личный день с пояснением', () => {
+    const t = morningText({ loc: KALINOVO, date: '2026-11-22', birthday: { day: 30, month: 6 }, firstName: 'Мария' });
+    expect(t).toContain('14-й лунный день');
+    expect(t).toContain('Хорошо сегодня');
+    expect(t).toContain('Лучше поберечься');
+    expect(t).toContain('Твой личный день — 7');
+    expect(t).toContain('притормозить и подумать');
+    expect(t).toContain('Луна без курса. По традиции');
+    expect(t).toContain('Практика дня');
+  });
+  it('каждое утро помещается в одно сообщение Telegram (до 4096 знаков)', () => {
+    const plain = (s: string) => s.replace(/<[^>]+>/g, '');
+    for (let i = 0; i < 60; i++) {
+      const d = new Date(Date.UTC(2026, 10, 1 + i)).toISOString().slice(0, 10) as `${number}-${number}-${number}`;
+      const t = morningText({ loc: KALINOVO, placeName: 'Калиново', date: d, birthday: { day: 30, month: 6 }, firstName: 'Александра-Мария' });
+      expect(plain(t).length).toBeLessThan(4096);
+    }
+  });
 });
 
 describe('профиль в облаке Telegram', () => {

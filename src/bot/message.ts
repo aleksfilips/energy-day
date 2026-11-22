@@ -9,6 +9,10 @@ import { computeDay } from '../synthesis/day';
 import { synthesize } from '../synthesis/rules';
 import { dayAreas } from '../synthesis/areas';
 import { dayPlan, goodWindows, spanText, vocInDaylight } from '../synthesis/life';
+import { moodAbout, plainText } from '../synthesis/explain';
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
 const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 const WD = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
@@ -55,26 +59,65 @@ export function morningText({ loc, placeName, date, birthday, firstName }: Morni
   const good = goodWindows(day);
   const voc = vocInDaylight(day);
 
+  const ld = content.lunarDay(day.dominant.number);
+  const ph = content.phase(day.phase.phase);
+  const sg = content.sign(day.dominantSign);
+  const bullets = (xs: string[]) => xs.map((x) => `• ${esc(cap(x))}`);
+  const vocInfo = content.special('voc');
+
   const lines = [
-    `<b>${wd[0]!.toUpperCase() + wd.slice(1)}, ${d} ${MONTHS[m - 1]}</b>${placeName ? ` · ${esc(placeName)}` : ''}`,
+    `<b>${cap(wd)}, ${d} ${MONTHS[m - 1]}</b>${placeName ? ` · ${esc(placeName)}` : ''}`,
     ...(firstName ? [`Доброе утро, ${esc(firstName)}!`] : []),
-    `🌙 ${day.dominant.number}-й лунный день${change}`,
-    `Луна ${day.phase.waxing ? 'растёт' : 'убывает'}, ${esc(A.inSign(day.dominantSign))}`,
     '',
-    `<b>${esc(plan.mood.title)}.</b> ${esc(plan.headline)}`,
+    `🌙 <b>${day.dominant.number}-й лунный день</b>${change}`,
+    esc(plainText(ld.essence)),
     '',
+    `<b>${esc(plan.mood.title)}.</b> ${esc(moodAbout(plan.mood))}`,
+    `Луна ${day.phase.waxing ? 'растёт' : 'убывает'}: ${esc(lowerFirst(ph.essence.split('. ').slice(1).join('. ') || ph.essence))}`,
+    `Луна ${esc(A.inSign(day.dominantSign))} добавляет дню ${esc(sg.coloring)}.`,
+    '',
+    '<b>Хорошо сегодня</b>',
+    ...bullets(ld.favorable),
+    '<b>Лучше поберечься</b>',
+    ...bullets(ld.mindful),
+    '',
+    '<b>Сферы жизни</b>',
   ];
-  if (names('good')) lines.push(`✅ <b>Хорошо:</b> ${esc(names('good'))}`);
-  if (names('bad')) lines.push(`⛔ <b>Лучше не стоит:</b> ${esc(names('bad'))}`);
-  lines.push('');
+  if (names('good')) lines.push(`✅ Благоприятно: ${esc(names('good'))}`);
+  if (names('neutral')) lines.push(`➖ Обычный день: ${esc(names('neutral'))}`);
+  if (names('bad')) lines.push(`⛔ Лучше отложить: ${esc(names('bad'))}`);
+  lines.push('', '<b>Время дня</b>');
   lines.push(`🕐 Для важных дел: ${good.length ? good.map((w) => spanText(w, tz)).join(', ') : 'сегодня лучше без важных начинаний'}`);
-  if (voc.length) lines.push(`⏸ Луна без курса: ${voc.map((w) => spanText(w, tz)).join(', ')} — новое не начинать`);
+  if (voc.length)
+    lines.push(
+      `⏸ ${voc.map((w) => spanText(w, tz)).join(', ')} — Луна без курса. По традиции начатое в эти часы часто не доходит до цели. Лучше заниматься привычным, ${esc(vocInfo.mindful.join(', '))}.`,
+    );
   if (day.sun.sunrise && day.sun.sunset) lines.push(`☀️ Восход ${t(day.sun.sunrise)}, закат ${t(day.sun.sunset)}`);
-  for (const mm of card.modifiers.filter((x) => ['eclipse', 'new', 'full', 'supermoon'].includes(x.key))) lines.push(`✨ ${esc(mm.title)}: ${esc(mm.text)}`);
+  const mods = card.modifiers.filter((x) => ['eclipse', 'new', 'full', 'supermoon'].includes(x.key));
+  if (mods.length) lines.push('', ...mods.map((mm) => `✨ <b>${esc(mm.title)}:</b> ${esc(mm.text)}`));
   if (card.personal) {
     const pn = content.personal(card.personal.number);
-    lines.push('', `🔢 Твой личный день: <b>${card.personal.number}</b>, цвет ${esc(pn.color.name)}. ${esc(pn.essence)}`);
+    lines.push(
+      '',
+      `🔢 <b>Твой личный день — ${card.personal.number}</b> (цвет ${esc(pn.color.name)})`,
+      esc(pn.about),
+      `Хорошо: ${esc(pn.favorable.join(', '))}. Не стоит: ${esc(pn.mindful.join(', '))}.`,
+      '<i>Личный день — число из нумерологии по твоей дате рождения, у каждого своё и меняется каждый день.</i>',
+    );
   }
-  lines.push('', `💭 <i>${esc(plan.question)}</i>`);
-  return lines.join('\n');
+  lines.push('', `🌱 <b>Практика дня:</b> ${esc(ld.practice)}`, `💭 <i>${esc(plan.question)}</i>`);
+  lines.push('', 'Подробно по каждой сфере — в приложении, кнопка «Открыть».');
+  return fit(lines);
+}
+
+/** Телеграм принимает до 4096 знаков. Если вдруг длиннее — убираем второстепенные строки. */
+const LIMIT = 3900;
+const plain = (s: string) => s.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+function fit(lines: string[]): string {
+  let out = lines.join('\n');
+  for (const drop of [/^➖ /, /^<i>Личный день — число/, /^Подробно по каждой/, /^🌱 /]) {
+    if (plain(out).length <= LIMIT) break;
+    out = out.split('\n').filter((l) => !drop.test(l)).join('\n');
+  }
+  return out;
 }

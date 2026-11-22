@@ -99,9 +99,9 @@ describe('поиск мест: обработка ответов', () => {
 
 describe('исторические переводы часов (момент рождения)', () => {
   const at = (y: number, m: number, d: number, h: number, mi: number, z: string) => birthMoment(y, m, d, h, mi, z);
-  it('Новоуральск, 30.06.1994 00:05 — летнее время UTC+6', () => {
-    const b = at(1994, 6, 30, 0, 5, 'Asia/Yekaterinburg');
-    expect(b.utc.toISOString()).toBe('1994-06-29T18:05:00.000Z');
+  it('Урал, лето 1994, 00:20 — летнее время UTC+6 (дата сдвигается на предыдущий день по UTC)', () => {
+    const b = at(1994, 7, 12, 0, 20, 'Asia/Yekaterinburg');
+    expect(b.utc.toISOString()).toBe('1994-07-11T18:20:00.000Z');
     expect(b.offset).toBe(360);
     expect(b.summer).toBe(true);
   });
