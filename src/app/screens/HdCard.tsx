@@ -2,7 +2,8 @@
  * «Дизайн человека»: карточка-вход на «Сегодня», полный лист и режим Рефлектора (D-133).
  * Данные рождения — в «Мои данные».
  */
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { formatTime, toDateKey, type DateKey } from '../../astro/time';
 import { bodygraph, type Bodygraph } from '../../humandesign/chart';
 import { dayTransits } from '../../humandesign/transits';
@@ -10,14 +11,15 @@ import { centerTitle, channelTitle, gateInfo, REFLECTOR, transitStory, type HdIt
 import { lunarMonth, moonGateAt, moonReturn } from '../../humandesign/reflector';
 import { CENTERS, type Center } from '../../humandesign/graph';
 import { HD_BODY_NAMES, type HdBody } from '../../humandesign/positions';
-import type { GraphLayer, GraphView } from '../../humandesign/overlay';
+import type { GraphLayer, GraphView, NatalMark } from '../../humandesign/overlay';
 import type { LunarDay } from '../../humandesign/reflector';
 import { ABOUT } from '../../synthesis/explain';
 import { useStore } from '../store';
 import { haptic } from '../../telegram';
 import { cx, Sheet } from '../ui';
 import { About, SubTitle } from './Explain';
-import { BodygraphSvg, NIGHT } from './Bodygraph';
+import { SilhouettePick } from './Profile';
+import { BodygraphSvg, CENTER_FILL, NIGHT, PALETTE, type GraphTone } from './Bodygraph';
 import { humanDate } from '../format';
 
 /** Карта человека (null, если нет данных рождения). */
@@ -60,17 +62,17 @@ export function NightCard({ children, className, onClick }: { children: ReactNod
   );
 }
 
-function Eyebrow({ children }: { children: ReactNode }) {
+function Eyebrow({ children, light = false }: { children: ReactNode; light?: boolean }) {
   return (
-    <div className="text-[11px] font-medium uppercase tracking-[0.2em]" style={{ color: NIGHT.gold }}>
+    <div className="text-[11px] font-medium uppercase tracking-[0.2em]" style={{ color: light ? 'var(--accent)' : NIGHT.gold }}>
       {children}
     </div>
   );
 }
 
-function NightToggle<T extends string>({ value, options, onChange }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void }) {
+function NightToggle<T extends string>({ value, options, onChange, light = false }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void; light?: boolean }) {
   return (
-    <div className="mx-auto flex w-fit rounded-full p-1" style={{ background: 'rgba(255,255,255,0.06)', boxShadow: '0 0 0 1px rgba(255,255,255,0.08) inset' }}>
+    <div className="mx-auto flex w-fit rounded-full p-1" style={light ? { background: 'var(--surface-2)' } : { background: 'rgba(255,255,255,0.06)', boxShadow: '0 0 0 1px rgba(255,255,255,0.08) inset' }}>
       {options.map((o) => (
         <button
           key={o.value}
@@ -80,7 +82,7 @@ function NightToggle<T extends string>({ value, options, onChange }: { value: T;
             onChange(o.value);
           }}
           className="h-8 rounded-full px-4 text-[13px] font-medium transition"
-          style={value === o.value ? { background: `linear-gradient(180deg, ${NIGHT.goldA}, ${NIGHT.goldB})`, color: NIGHT.pin } : { color: NIGHT.muted }}
+          style={value === o.value ? { background: `linear-gradient(180deg, ${NIGHT.goldA}, ${NIGHT.goldB})`, color: NIGHT.pin } : { color: light ? 'var(--muted)' : NIGHT.muted }}
         >
           {o.label}
         </button>
@@ -89,16 +91,90 @@ function NightToggle<T extends string>({ value, options, onChange }: { value: T;
   );
 }
 
-function Legend() {
-  const sw = (bg: string) => <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: bg }} />;
+/** Цвета карточки с бодиграфом: светлая тема — белая «бумага», тёмная — ночь. */
+function useHeroTone() {
+  const { theme } = useStore();
+  const tone: GraphTone = theme === 'light' ? 'light' : 'night';
+  return { tone, P: PALETTE[tone], ink: tone === 'light' ? 'var(--ink)' : NIGHT.ink, muted: tone === 'light' ? 'var(--muted)' : NIGHT.muted, faint: tone === 'light' ? 'var(--faint)' : NIGHT.faint };
+}
+
+function HeroCard({ children, className }: { children: ReactNode; className?: string }) {
+  const { tone } = useHeroTone();
+  if (tone === 'night') return <NightCard className={className}>{children}</NightCard>;
   return (
-    <div className="flex flex-wrap justify-center gap-2 text-[12px]" style={{ color: NIGHT.muted }}>
-      <span className="flex items-center gap-1.5 rounded-full px-2.5 py-1" style={{ background: 'rgba(236,201,143,0.1)' }}>
-        {sw(`linear-gradient(180deg, ${NIGHT.goldA}, ${NIGHT.goldB})`)}твоё с рождения
-      </span>
-      <span className="flex items-center gap-1.5 rounded-full px-2.5 py-1" style={{ background: 'rgba(143,184,255,0.12)' }}>
-        {sw(`linear-gradient(180deg, ${NIGHT.blueA}, ${NIGHT.blueB})`)}включает транзит
-      </span>
+    <div className={cx('relative overflow-hidden rounded-[28px]', className)} style={{ background: '#ffffff', color: 'var(--ink)', boxShadow: '0 0 0 1px rgba(60,40,10,0.08) inset, 0 14px 34px rgba(60,40,10,0.08)' }}>
+      {children}
+    </div>
+  );
+}
+
+function Legend() {
+  const { P, muted, tone } = useHeroTone();
+  const chip = tone === 'light' ? 'rgba(20,20,40,0.05)' : 'rgba(255,255,255,0.06)';
+  const sw = (bg: string, extra?: CSSProperties) => <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: bg, ...extra }} />;
+  const items: [ReactNode, string][] = [
+    [sw(P.personality), 'Личность'],
+    [sw(P.design), 'Дизайн'],
+    [sw(P.transit), 'транзит'],
+    [<span key="s" className="inline-block h-2.5 w-2.5 rounded-[3px]" style={{ background: `linear-gradient(180deg, ${CENTER_FILL.transit[0]}, ${CENTER_FILL.transit[1]})` }} />, 'центр от транзита'],
+  ];
+  return (
+    <div className="flex flex-wrap justify-center gap-1.5 text-[12px]" style={{ color: muted }}>
+      {items.map(([icon, label]) => (
+        <span key={label} className="flex items-center gap-1.5 rounded-full px-2.5 py-1" style={{ background: chip }}>
+          {icon}
+          {label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+const GLYPH: Record<HdBody, string> = {
+  sun: '\u2609', earth: '\u2295', northNode: '\u260A', southNode: '\u260B', moon: '\u263D', mercury: '\u263F', venus: '\u2640',
+  mars: '\u2642', jupiter: '\u2643', saturn: '\u2644', uranus: '\u2645', neptune: '\u2646', pluto: '\u2647',
+};
+const COLUMN_ORDER: HdBody[] = ['sun', 'earth', 'northNode', 'southNode', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
+
+/** Колонка планет: Дизайн (бордо, слева) или Личность (справа). */
+function PlanetColumn({ marks, side, named = false }: { marks: NatalMark[]; side: 'design' | 'personality'; named?: boolean }) {
+  const { P, tone } = useHeroTone();
+  const color = side === 'design' ? P.design : P.personality;
+  const glyphInk = side === 'design' ? '#fff' : NIGHT.pin;
+  const by = new Map(marks.map((m) => [m.body, m]));
+  return (
+    <div className={cx('flex h-full flex-col justify-between py-1', side === 'personality' && 'items-end')}>
+      {COLUMN_ORDER.map((b) => {
+        const m = by.get(b);
+        if (!m) return null;
+        const glyph = (
+          <span className="flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full text-[12px] leading-none" style={{ background: color, color: glyphInk }} title={HD_BODY_NAMES[b]}>
+            {GLYPH[b] + '\uFE0E'}
+          </span>
+        );
+        const val = (
+          <span className="text-[11.5px] font-semibold tabular-nums" style={{ color }}>
+            {named && side === 'personality' && <span className="mr-1.5 font-normal opacity-70">{HD_BODY_NAMES[b]}</span>}
+            {m.gate}.{m.line}
+            {named && side === 'design' && <span className="ml-1.5 font-normal opacity-70">{HD_BODY_NAMES[b]}</span>}
+          </span>
+        );
+        return (
+          <div key={b} className="flex items-center gap-1">
+            {side === 'design' ? (
+              <>
+                {glyph}
+                {val}
+              </>
+            ) : (
+              <>
+                {val}
+                {glyph}
+              </>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -114,30 +190,112 @@ function planetsLine(layer: GraphLayer): string {
     .join(' · ');
 }
 
-/** Большой бодиграф на «ночной» карточке. */
+/** Колонки + бодиграф: как на классической карте рейв-чарта. */
+function GraphWithColumns({ g, layer, col = 48 }: { g: GraphView; layer: GraphLayer; col?: number }) {
+  const { settings } = useStore();
+  const { tone, P } = useHeroTone();
+  return (
+    <>
+      <div className="flex items-baseline justify-between px-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]">
+        <span style={{ color: P.design }}>Дизайн</span>
+        <span style={{ color: P.personality }}>Личность</span>
+      </div>
+      <div className="mt-1 grid items-stretch gap-0.5" style={{ gridTemplateColumns: `${col}px 1fr ${col}px` }}>
+        <PlanetColumn marks={g.design} side="design" />
+        <BodygraphSvg g={g} layer={layer} tone={tone} silhouette={settings.hdSilhouette ?? 'm'} className="block w-full" />
+        <PlanetColumn marks={g.personality} side="personality" />
+      </div>
+    </>
+  );
+}
+
+/** Большой бодиграф: силуэт, колонки Дизайна и Личности, транзит поверх. Нажатие — во весь экран. */
 function HdHero({ story }: { story: HdStory }) {
   const g = story.graph;
+  const { settings } = useStore();
+  const { tone, faint } = useHeroTone();
   const [mode, setMode] = useState<'now' | 'day'>(g.now ? 'now' : 'day');
+  const [zoom, setZoom] = useState(false);
   const layer = mode === 'now' && g.now ? g.now : g.day;
+  const toggle = g.now && (
+    <NightToggle light={tone === 'light'} value={mode} options={[{ value: 'now', label: 'Сейчас' }, { value: 'day', label: 'За весь день' }]} onChange={setMode} />
+  );
   return (
-    <NightCard className="px-4 pb-5 pt-5">
+    <HeroCard className="-mx-3 px-2 pb-5 pt-5">
       <div className="text-center">
-        <Eyebrow>
+        <Eyebrow light={tone === 'light'}>
           {story.type.name} · {story.type.profile}
         </Eyebrow>
         <div className="mt-1 font-serif text-[26px] leading-tight">Твоя карта сегодня</div>
       </div>
-      {g.now && (
-        <div className="mt-3">
-          <NightToggle value={mode} options={[{ value: 'now', label: 'Сейчас' }, { value: 'day', label: 'За весь день' }]} onChange={setMode} />
+      {toggle && <div className="mt-3">{toggle}</div>}
+      <button className="mt-3 block w-full text-left" onClick={() => setZoom(true)} aria-label="Открыть бодиграф во весь экран">
+        <GraphWithColumns g={g} layer={layer} />
+      </button>
+      <div className="mt-1 text-center text-[11.5px]" style={{ color: faint }}>
+        нажми на карту, чтобы рассмотреть крупнее
+      </div>
+      <div className="mt-3">
+        <Legend />
+      </div>
+      {settings.hdSilhouette == null && (
+        <div className="mx-auto mt-3 max-w-[300px]">
+          <div className="mb-1.5 text-center text-[12px]" style={{ color: faint }}>
+            Какой силуэт рисовать?
+          </div>
+          <SilhouettePick />
         </div>
       )}
-      <BodygraphSvg g={g} layer={layer} className="mx-auto mt-2 block w-full max-w-[360px]" />
-      <Legend />
-      <p className="mx-auto mt-3 max-w-[340px] text-center text-[11.5px] leading-[1.6]" style={{ color: NIGHT.faint }}>
-        {planetsLine(layer)}
+      <p className="mx-auto mt-3 max-w-[340px] text-center text-[11.5px] leading-[1.6]" style={{ color: faint }}>
+        Транзит: {planetsLine(layer)}
       </p>
-    </NightCard>
+      {zoom && <GraphZoom onClose={() => setZoom(false)} toggle={toggle} g={g} layer={layer} />}
+    </HeroCard>
+  );
+}
+
+/** Бодиграф во весь экран: крупно, с колонками; прокручивается, если не помещается. */
+function GraphZoom({ onClose, toggle, g, layer }: { onClose: () => void; toggle: ReactNode; g: GraphView; layer: GraphLayer }) {
+  const { tone, ink } = useHeroTone();
+  const { settings } = useStore();
+  return createPortal(
+    <div
+      className="fade-in fixed inset-0 z-[60] overflow-auto"
+      style={tone === 'light' ? { background: '#ffffff', color: 'var(--ink)' } : { background: `linear-gradient(160deg, ${NIGHT.bgA}, ${NIGHT.bgB})`, color: NIGHT.ink }}
+    >
+      <div className="safe-bottom mx-auto max-w-[640px] px-2 pb-8 pt-3">
+        <div className="mb-2 flex items-center justify-between px-2">
+          <div className="font-serif text-[22px]">Твоя карта</div>
+          <button onClick={onClose} className="h-9 rounded-full px-4 text-[14px] font-medium" style={{ background: tone === 'light' ? 'var(--surface-2)' : 'rgba(255,255,255,0.08)', color: ink }}>
+            Закрыть
+          </button>
+        </div>
+        {toggle && <div className="mb-3">{toggle}</div>}
+        <BodygraphSvg g={g} layer={layer} tone={tone} silhouette={settings.hdSilhouette ?? 'm'} className="mx-auto block w-full max-w-[520px]" />
+        <div className="mx-auto mt-3 grid max-w-[420px] grid-cols-2 gap-6 px-4">
+          <div>
+            <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: PALETTE[tone].design }}>
+              Дизайн
+            </div>
+            <div className="h-[330px]">
+              <PlanetColumn marks={g.design} side="design" named />
+            </div>
+          </div>
+          <div>
+            <div className="mb-1 text-right text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: PALETTE[tone].personality }}>
+              Личность
+            </div>
+            <div className="h-[330px]">
+              <PlanetColumn marks={g.personality} side="personality" named />
+            </div>
+          </div>
+        </div>
+        <div className="mt-3">
+          <Legend />
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -286,6 +444,7 @@ function spotlightLines(story: HdStory): string[] {
 
 /** Заметная карточка «Твой дизайн сегодня» на главном экране. */
 export function HdSpotlight({ date }: { date: DateKey }) {
+  const { settings } = useStore();
   const story = useHdStory(date);
   const [open, setOpen] = useState(false);
   if (!story) return null;
@@ -302,7 +461,7 @@ export function HdSpotlight({ date }: { date: DateKey }) {
         }}
       >
         <div className="flex items-center gap-3">
-          <BodygraphSvg g={story.graph} layer={story.graph.now ?? story.graph.day} mini className="h-[132px] w-[88px] shrink-0" />
+          <BodygraphSvg g={story.graph} layer={story.graph.now ?? story.graph.day} mini silhouette={settings.hdSilhouette ?? 'm'} className="h-[132px] w-[88px] shrink-0" />
           <div className="min-w-0 flex-1">
             <Eyebrow>{refl ? 'Рефлектор · Луна' : 'Дизайн человека'}</Eyebrow>
             <div className="mt-1 font-serif text-[23px] leading-[1.15]">
@@ -343,7 +502,7 @@ export function HdCard({ date }: { date: DateKey }) {
 /* ───────────── Рефлектор ───────────── */
 
 /** Мини-бодиграф дня для лунного календаря: что определено в эти сутки (Луна и все планеты вместе). */
-function LunarMini({ base, d }: { base: GraphView; d: LunarDay }) {
+function LunarMini({ base, d, sil }: { base: GraphView; d: LunarDay; sil: 'm' | 'f' }) {
   const natal = new Set(base.natalGates);
   const gates: Record<number, HdBody[]> = {};
   for (const g of d.moonGates) gates[g] = ['moon'];
@@ -355,7 +514,7 @@ function LunarMini({ base, d }: { base: GraphView; d: LunarDay }) {
       style={{ background: `linear-gradient(160deg, ${NIGHT.bgA}, ${NIGHT.bgB})` }}
       aria-label={d.centers.length ? `Определены: ${d.centers.map(centerTitle).join(', ')}` : 'Центры не определены'}
     >
-      <BodygraphSvg g={base} layer={layer} mini className="h-[58px] w-[39px]" />
+      <BodygraphSvg g={base} layer={layer} mini silhouette={sil} className="h-[58px] w-[39px]" />
     </div>
   );
 }
@@ -377,7 +536,20 @@ function ReflectorPanel({ date }: { date: DateKey }) {
   const moon = moonGateAt(now);
   const dec = settings.hdDecision;
   const decEnd = useMemo(() => (dec ? moonReturn(new Date(dec.start)) : null), [dec]);
-  const base: GraphView = useMemo(() => ({ natalGates: chart ? [...chart.gates] : [], natalChannels: [], natalCenters: [], day: { gates: {}, channels: [], centers: [] }, now: null }), [chart]);
+  const base: GraphView = useMemo(
+    () => ({
+      natalGates: chart ? [...chart.gates] : [],
+      personalityGates: chart ? chart.personality.map((a) => a.gate) : [],
+      designGates: chart ? chart.design.map((a) => a.gate) : [],
+      personality: [],
+      design: [],
+      natalChannels: [],
+      natalCenters: [],
+      day: { gates: {}, channels: [], centers: [] },
+      now: null,
+    }),
+    [chart],
+  );
   if (!chart) return null;
 
   const dayN = dec ? Math.floor((now.getTime() - new Date(dec.start).getTime()) / 86_400_000) + 1 : 0;
@@ -458,7 +630,7 @@ function ReflectorPanel({ date }: { date: DateKey }) {
             const byMoon = d.channels.filter((c) => c.moon);
             return (
               <div key={d.key} className={cx('flex items-center gap-3 px-3 py-2.5', i > 0 && 'border-t border-line', d.key === date && 'bg-accent-soft')}>
-                <LunarMini base={base} d={d} />
+                <LunarMini base={base} d={d} sil={settings.hdSilhouette ?? 'm'} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline justify-between gap-2">
                     <span className="text-[14px] font-semibold">

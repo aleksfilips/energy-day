@@ -132,6 +132,34 @@ function PlaceConfirmBirth({ place, onChange }: { place: NonNullable<BirthValue[
   return <PlaceConfirm place={{ name: place.name, label: place.label ?? '', latitude: place.latitude, longitude: place.longitude, timeZone: place.timeZone, tzSource: 'base', countryCode: '', source: 'geonames' }} onChange={onChange} hideNow />;
 }
 
+/** Выбор силуэта (мужской / женский) для рисунка бодиграфа. */
+export function SilhouettePick() {
+  const { settings, update } = useStore();
+  const cur = settings.hdSilhouette ?? null;
+  return (
+    <div className="flex gap-2">
+      {(
+        [
+          ['m', 'Мужской'],
+          ['f', 'Женский'],
+        ] as const
+      ).map(([v, label]) => (
+        <button
+          key={v}
+          onClick={() => {
+            haptic.select();
+            void update({ hdSilhouette: v });
+          }}
+          className="h-10 flex-1 rounded-xl text-[15px] font-medium transition"
+          style={cur === v ? { background: 'var(--accent)', color: 'var(--bg)' } : { background: 'var(--surface-2)', color: 'var(--ink)' }}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /** Экран «Мои данные». */
 export function ProfileScreen({ nav }: { nav: Nav }) {
   const { settings, update } = useStore();
@@ -182,6 +210,12 @@ export function ProfileScreen({ nav }: { nav: Nav }) {
       <Button className="w-full" onClick={save}>
         {saved ? 'Сохранено ✓' : 'Сохранить'}
       </Button>
+      {chart && (
+        <Card className="space-y-2">
+          <Label>Силуэт на бодиграфе</Label>
+          <SilhouettePick />
+        </Card>
+      )}
       {chart && (
         <Card className="!py-1">
           <Disclosure title="Мой бодиграф" subtitle="Дизайн человека">

@@ -16,8 +16,20 @@ export interface GraphLayer {
   centers: Center[];
 }
 
+/** Активация с рождения для колонок «Дизайн» и «Личность». */
+export interface NatalMark {
+  body: HdBody;
+  gate: number;
+  line: number;
+}
+
 export interface GraphView {
   natalGates: number[];
+  /** Ворота Личности (сознательное, чёрное) и Дизайна (бессознательное, красное). */
+  personalityGates: number[];
+  designGates: number[];
+  personality: NatalMark[];
+  design: NatalMark[];
   natalChannels: string[];
   natalCenters: Center[];
   day: GraphLayer;
@@ -46,6 +58,10 @@ export function graphView(chart: Bodygraph, t: DayTransits, now?: Date): GraphVi
   const nowSeg = now ? t.segments.find((s) => s.from.getTime() <= now.getTime() && now.getTime() < s.to.getTime()) : undefined;
   return {
     natalGates: [...chart.gates].sort((a, b) => a - b),
+    personalityGates: [...new Set(chart.personality.map((a) => a.gate))],
+    designGates: [...new Set(chart.design.map((a) => a.gate))],
+    personality: chart.personality.map((a) => ({ body: a.body, gate: a.gate, line: a.line })),
+    design: chart.design.map((a) => ({ body: a.body, gate: a.gate, line: a.line })),
     natalChannels: chart.channels.map(channelKey),
     natalCenters: CENTERS.filter((c) => chart.centers.has(c)),
     day: layer(chart, t.segments),
