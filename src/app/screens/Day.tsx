@@ -9,7 +9,9 @@ import { useDay } from '../hooks';
 import { useStore } from '../store';
 import { Card, Disclosure, Label, List, SchoolNote, ToneDot } from '../ui';
 import { WhySheet } from './EnergyCard';
-import { AreasCard, LifeCard, MoonHero, ord, PersonalCard, PlanCard, QuestionCard, TimeCard } from './DayParts';
+import { AreasCard, LifeCard, ord, PersonalCard, QuestionCard, TimeCard } from './DayParts';
+import { HeroCard } from './Compact';
+import { HdCard } from './HdCard';
 import type { Nav } from '../App';
 
 /** Подпись источника: только школа, без служебных пометок. */
@@ -45,16 +47,15 @@ export function DayScreen({ date, nav }: { date: DateKey; nav: Nav }) {
         </button>
       </header>
 
-      <MoonHero model={model} sign={model.dominantSign} number={model.dominant.number} until={card.base.next !== null ? card.base.changesAt : null} next={card.base.next} />
+      <HeroCard model={model} plan={extra.plan} number={model.dominant.number} sign={model.dominantSign} until={card.base.next !== null ? card.base.changesAt : null} next={card.base.next} onWhy={() => setWhy(true)} />
       {card.base.prev !== null && card.base.changesAt && (
-        <p className="-mt-1 text-[14px] text-faint">До {t(card.base.changesAt)} ещё идёт {ord(card.base.prev)} лунный день.</p>
+        <p className="-mt-1 px-1 text-[13px] text-faint">До {t(card.base.changesAt)} ещё идёт {ord(card.base.prev)} лунный день.</p>
       )}
-
-      <PlanCard plan={extra.plan} onWhy={() => setWhy(true)} personal={card.personal} />
       <TimeCard model={model} />
       <AreasCard areas={extra.verdicts} lunarDay={model.dominant.number} prev={card.base.prev} changesAt={card.base.prev !== null ? card.base.changesAt : null} tz={location.timeZone} />
       <LifeCard areas={extra.areas} sign={model.dominantSign} />
       <PersonalCard model={model} content={content} />
+      <HdCard date={date} />
       <QuestionCard plan={extra.plan} onWrite={() => nav.push({ name: 'entry', date })} />
 
       <h2 className="px-1 pt-2 text-[17px] font-semibold">Подробнее</h2>

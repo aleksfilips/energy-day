@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { haptic } from '../telegram';
 
 export function cx(...xs: (string | false | null | undefined)[]): string {
@@ -235,7 +236,8 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
     };
   }, [open]);
   if (!open) return null;
-  return (
+  // Портал: лист всегда поверх экрана, даже если родитель анимирован (transform ломает position: fixed).
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       <div className="fade-in absolute inset-0 bg-black/55" onClick={onClose} />
       <div className="sheet-up safe-bottom relative max-h-[88vh] w-full max-w-[560px] overflow-y-auto rounded-t-[28px] bg-surface px-5 pb-6 pt-3">
@@ -243,7 +245,8 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
         {title && <div className="mb-4 font-display text-[20px] font-semibold">{title}</div>}
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
