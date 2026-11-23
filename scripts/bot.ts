@@ -5,7 +5,8 @@
  *  3) сохраняет список подписчиков ЗАШИФРОВАННЫМ (AES-256-GCM, ключ — секрет BOT_DATA_KEY) в ветку bot-data.
  * В журналах (они в публичном репозитории видны всем) печатаются только количества, без личных данных.
  *
- * Секреты: TELEGRAM_BOT_TOKEN, BOT_DATA_KEY. Необязательно: APP_URL.
+ * Секреты: TELEGRAM_BOT_TOKEN, BOT_DATA_KEY. Необязательно: APP_URL, YANDEX_TTS_KEY (голос Алёна).
+ * Голос и Дизайн человека с картинкой бодиграфа — по флагам в коде подписки (D-137).
  * Перенос владельца со старой схемы: TELEGRAM_CHAT_ID, LATITUDE, LONGITUDE, TIME_ZONE, LOCATION_NAME, BIRTH_DAY, BIRTH_MONTH.
  * Файл данных: аргумент --data <путь> (по умолчанию bot-data/subscribers.enc).
  */
@@ -13,7 +14,13 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import type { ResolvedLocation } from '../src/astro/location';
+import { fileURLToPath } from 'node:url';
+import { Resvg } from '@resvg/resvg-js';
 import { morningText } from '../src/bot/message';
+import { hdMorning } from '../src/bot/hd';
+import { morningSpeech } from '../src/bot/speech';
+import { VOICE_NAMES, type VoiceId } from '../src/bot/payload';
+import { synth } from './tts';
 import { applyUpdate, emptyState, isDue, localTime, type Action, type BotState, type Subscriber } from '../src/bot/state';
 import { SITE_URL } from '../src/config';
 
@@ -72,6 +79,34 @@ async function tg<T>(method: string, body: object): Promise<TgResp<T>> {
   return { ok: false, description: 'слишком много запросов' };
 }
 
+/** Отправка файла (голос, картинка). */
+async function tgFile<T>(method: string, fields: Record<string, string>, file: { field: string; data: Buffer; name: string; type: string }): Promise<TgResp<T>> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const form = new FormData();
+    for (const [k, v] of Object.entries(fields)) form.append(k, v);
+    form.append(file.field, new Blob([new Uint8Array(file.data)], { type: file.type }), file.name);
+    const res = await fetch(`${env('TELEGRAM_API') ?? 'https://api.telegram.org'}/bot${token}/${method}`, { method: 'POST', body: form });
+    const j = (await res.json()) as TgResp<T>;
+    if (j.error_code === 429 && j.parameters?.retry_after) {
+      await new Promise((r) => setTimeout(r, (j.parameters!.retry_after! + 1) * 1000));
+      continue;
+    }
+    return j;
+  }
+  return { ok: false, description: 'слишком много запросов' };
+}
+
+const FONTS = fileURLToPath(new URL('./fonts/', import.meta.url));
+function png(svg: string): Buffer {
+  return Buffer.from(
+    new Resvg(svg, {
+      font: { fontFiles: ['CormorantGaramond-Medium.ttf', 'Inter.ttf', 'DejaVuSans.ttf'].map((f) => FONTS + f), loadSystemFonts: false, defaultFontFamily: 'Inter' },
+    })
+      .render()
+      .asPng(),
+  );
+}
+
 const openButton = (text = 'Открыть «Энергию дня»') => ({ inline_keyboard: [[{ text, web_app: { url: appUrl } }]] });
 
 async function send(chatId: string, text: string, button = true): Promise<TgResp<unknown>> {
@@ -91,6 +126,70 @@ function textFor(s: Subscriber, now: Date, greet = true): string {
     birthday: s.sub.birthDay ? { day: s.sub.birthDay, month: s.sub.birthMonth } : null,
     firstName: greet ? s.firstName || undefined : undefined,
   });
+}
+
+const WD = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+function heading(date: string): string {
+  const [y, m, d] = date.split('-').map(Number) as [number, number, number];
+  return `${WD[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]}, ${d} ${MONTHS[m - 1]}`;
+}
+
+/**
+ * Утреннее сообщение целиком: голос (если выбран), текст, затем Дизайн человека — картинка и разбор (если включён).
+ * Возвращает ответ на основной текст: по нему понимаем, доставлено ли.
+ */
+async function sendMorning(chatId: string, s: Subscriber, now: Date, greet = true): Promise<TgResp<unknown>> {
+  const { date } = localTime(s.sub, now);
+  const birthUtc = s.sub.hd && s.sub.birthUtc ? new Date(s.sub.birthUtc) : null;
+  let hd: ReturnType<typeof hdMorning> | null = null;
+  try {
+    if (birthUtc) hd = hdMorning(birthUtc, date, s.sub.timeZone, heading(date));
+  } catch (e) {
+    console.error('Дизайн человека: ошибка расчёта', (e as Error).message);
+  }
+  if (s.sub.voice) {
+    try {
+      const paragraphs = morningSpeech(
+        { loc: locOf(s), date, birthday: s.sub.birthDay ? { day: s.sub.birthDay, month: s.sub.birthMonth } : null, firstName: greet ? s.firstName || undefined : undefined },
+        hd?.story,
+      );
+      const audio = await synth(paragraphs, s.sub.voice as Exclude<VoiceId, 0>);
+      if (audio) {
+        const r = await tgFile('sendVoice', { chat_id: chatId, caption: '🎧 Расклад на день голосом' }, { field: 'voice', data: audio, name: 'rasklad.mp3', type: 'audio/mpeg' });
+        if (!r.ok) console.error('sendVoice:', r.error_code, r.description);
+        if (r.error_code === 403) return r;
+      }
+    } catch (e) {
+      console.error('Голос: ошибка', (e as Error).message);
+    }
+  }
+  const main = await send(chatId, textFor(s, now, greet), !hd);
+  if (main.ok && hd) {
+    try {
+      const r = await tgFile('sendPhoto', { chat_id: chatId, caption: hd.caption, parse_mode: 'HTML' }, { field: 'photo', data: png(hd.svg), name: 'bodygraph.png', type: 'image/png' });
+      if (!r.ok) console.error('sendPhoto:', r.error_code, r.description);
+      await send(chatId, hd.text);
+    } catch (e) {
+      console.error('Дизайн человека: ошибка отправки', (e as Error).message);
+    }
+  }
+  return main;
+}
+
+/** Образцы голосов: короткая фраза каждым голосом. */
+async function sendVoices(chatId: string): Promise<void> {
+  const yandex = !!env('YANDEX_TTS_KEY');
+  await tg('sendMessage', { chat_id: chatId, text: 'Сейчас пришлю, как звучит каждый голос. Выбрать голос можно в приложении: «Ещё» → «Утреннее сообщение».' });
+  for (const v of [1, 2, 3] as const) {
+    if (v === 3 && !yandex) {
+      await tg('sendMessage', { chat_id: chatId, text: 'Голос Алёна (Яндекс) пока не подключён.' });
+      continue;
+    }
+    const text = [`Доброе утро! Меня зовут ${VOICE_NAMES[v]}. Сегодня двадцать третье ноября, идёт четырнадцатый лунный день, день призыва. Время для важных дел — с десяти до часу дня. Хорошего тебе дня!`];
+    const audio = await synth(text, v);
+    if (audio) await tgFile('sendVoice', { chat_id: chatId, caption: `Голос: ${VOICE_NAMES[v]}` }, { field: 'voice', data: audio, name: `golos-${v}.mp3`, type: 'audio/mpeg' });
+  }
 }
 
 const hhmm = (s: Subscriber) => `${String(s.sub.hour).padStart(2, '0')}:${String(s.sub.minute).padStart(2, '0')}`;
@@ -149,7 +248,7 @@ for (const u of upd.result ?? []) {
     const s = state.subs[a.chatId]!;
     await send(a.chatId, `${a.isNew ? '✨ Готово' : '✨ Данные обновлены'}${s.firstName ? `, ${s.firstName.replace(/[<>&]/g, '')}` : ''}! Каждое утро в ${hhmm(s)} по твоему времени буду присылать подсказку на день.\n\nНе нужно — напиши /stop. Сегодняшняя подсказка — ниже.`, false);
     try {
-      const r = await send(a.chatId, textFor(s, now, false));
+      const r = await sendMorning(a.chatId, s, now, false);
       if (r.ok) s.lastSent = localTime(s.sub, now).date;
     } catch {
       stats.failed++;
@@ -159,8 +258,10 @@ for (const u of upd.result ?? []) {
     await tg('sendMessage', { chat_id: a.chatId, text: a.wasSubscribed ? 'Хорошо, больше не буду присылать утренние сообщения. Включить снова: в приложении «Ещё» → «Утреннее сообщение».' : 'Утренние сообщения и так выключены.', reply_markup: openButton() });
   } else if (a.kind === 'today') {
     const s = state.subs[a.chatId];
-    if (s) await send(a.chatId, textFor(s, now, false));
+    if (s) await sendMorning(a.chatId, s, now, false);
     else await tg('sendMessage', { chat_id: a.chatId, text: 'Чтобы я присылал подсказку для твоего места, открой приложение и включи «Утреннее сообщение» в разделе «Ещё».', reply_markup: openButton() });
+  } else if (a.kind === 'voices') {
+    await sendVoices(a.chatId);
   } else if (a.kind === 'bad-code') {
     await tg('sendMessage', { chat_id: a.chatId, text: 'Не получилось прочитать данные подписки. Открой приложение и нажми «Включить» ещё раз.', reply_markup: openButton() });
   } else if (a.kind === 'welcome') {
@@ -176,7 +277,7 @@ for (const u of upd.result ?? []) {
 for (const [chatId, s] of Object.entries(state.subs)) {
   if (!isDue(s, now)) continue;
   try {
-    const r = await send(chatId, textFor(s, now));
+    const r = await sendMorning(chatId, s, now);
     if (r.ok) {
       s.lastSent = localTime(s.sub, now).date;
       stats.sent++;

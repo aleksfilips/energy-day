@@ -3,7 +3,10 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import * as A from '../../astro';
 import { addDays, type DateKey } from '../../astro/time';
 import { db } from '../../db';
-import { LAYER_NAMES, MIN_ENTRIES, MIN_PER_CATEGORY, patterns, type Metric } from '../../diary/patterns';
+import { HD_CENTER_NAMES, insights, layerName, MIN_ENTRIES, MIN_PER_CATEGORY, patterns, type Insight, type LayerKey, type Metric } from '../../diary/patterns';
+import { scheduleDiaryBackup } from '../../diary/autoBackup';
+import { bodygraph, openCenters } from '../../humandesign/chart';
+import { dayTransits } from '../../humandesign/transits';
 import { EVENT_TAGS, type DiaryEntry } from '../../diary/types';
 import { computeDay } from '../../synthesis/day';
 import { haptic } from '../../telegram';
@@ -24,6 +27,18 @@ export function EntryScreen({ date, nav }: { date: DateKey; nav: Nav }) {
   if (!location || !data) return null;
   const reflection = content.lunarDay(data.model.dominant.number).reflection;
 
+  /** Какие свои открытые центры в этот день определял транзит (D-140). */
+  const hdSnapshot = (): { hdOpen?: string[]; hdOwnOpen?: string[] } => {
+    if (!settings.humanDesign) return {};
+    try {
+      const chart = bodygraph(settings.humanDesign);
+      const t = dayTransits(chart, date, location.timeZone);
+      return { hdOpen: t.centers.map((c) => c.center), hdOwnOpen: openCenters(chart) };
+    } catch {
+      return {};
+    }
+  };
+
   const save = async () => {
     const m = data.model.dominant ? data.model : computeDay(location, date, dayOptions);
     const entry: DiaryEntry = {
@@ -41,10 +56,12 @@ export function EntryScreen({ date, nav }: { date: DateKey; nav: Nav }) {
         voc: m.vocDaylightShare > 0,
         personalDay: m.personal?.day ?? null,
         locationId: settings.activeLocationId,
+        ...hdSnapshot(),
       },
       updatedAt: Date.now(),
     };
     await db.entries.put(entry);
+    scheduleDiaryBackup();
     haptic.success();
     nav.pop();
   };
@@ -119,6 +136,7 @@ export function EntryScreen({ date, nav }: { date: DateKey; nav: Nav }) {
           className="mx-auto block text-[14px] text-faint"
           onClick={async () => {
             await db.entries.delete(date);
+            scheduleDiaryBackup();
             nav.pop();
           }}
         >
@@ -231,6 +249,7 @@ export function DiaryScreen({ nav }: { nav: Nav }) {
 }
 
 const CAT_NAME = (layer: string, c: string) => {
+  if (layer.startsWith('hd:')) return c === 'определён' ? 'определён транзитом' : 'открыт, как обычно';
   if (layer === 'phase') return A.PHASE_NAMES[c as A.PhaseKey] ?? c;
   if (layer === 'sign') return A.SIGN_NAMES[c as A.Sign] ?? c;
   if (layer === 'lunarDay') return `${c}-е`;
@@ -266,12 +285,13 @@ function Patterns({ entries }: { entries: DiaryEntry[] }) {
           <p className="mt-3 text-muted">Выводы появятся после {MIN_ENTRIES} записей. Ниже уже видны средние, но данных мало, вывод ненадёжен.</p>
         </Card>
       )}
+      {r.enough && <InsightsCard list={insights(r.layers)} metric={metric} />}
       {r.enough && (
         <Card>
           <Label>Что сильнее всего влияет на твоё самочувствие</Label>
           {r.best ? (
             <p className="mt-2 font-display text-[20px] leading-snug">
-              {LAYER_NAMES[r.best.layer]}: объясняет {Math.round(r.best.omega2! * 100)}% разброса оценок.
+              {layerName(r.best.layer)}: объясняет {Math.round(r.best.omega2! * 100)}% разброса оценок.
             </p>
           ) : (
             <p className="mt-2 text-[16px]">Пока явной связи нет: твоё самочувствие не зависит заметно ни от одного лунного признака. Продолжай записывать.</p>
@@ -282,7 +302,7 @@ function Patterns({ entries }: { entries: DiaryEntry[] }) {
               .map((l) => (
                 <div key={l.layer}>
                   <div className="flex justify-between text-[13px]">
-                    <span>{LAYER_NAMES[l.layer]}</span>
+                    <span>{layerName(l.layer)}</span>
                     <span className="tabular-nums text-muted">{l.omega2 === null ? 'мало данных' : `${Math.round(l.omega2 * 100)}%`}</span>
                   </div>
                   <div className="mt-1 h-1.5 rounded-full bg-surface-2">
@@ -299,7 +319,7 @@ function Patterns({ entries }: { entries: DiaryEntry[] }) {
       {r.layers.map((l) => (
         <Card key={l.layer}>
           <div className="flex items-baseline justify-between">
-            <Label>{LAYER_NAMES[l.layer]}</Label>
+            <Label>{layerName(l.layer)}</Label>
             <span className="text-[12px] text-faint">n = {l.n}</span>
           </div>
           <div className="mt-3 space-y-1.5">
@@ -333,5 +353,49 @@ function Patterns({ entries }: { entries: DiaryEntry[] }) {
         </Card>
       )}
     </div>
+  );
+}
+
+const METRIC_NAME: Record<Metric, string> = { overall: 'Самочувствие', energy: 'Энергия', mood: 'Настроение', sleep: 'Сон' };
+
+function cond(layer: LayerKey, c: string): string {
+  if (layer.startsWith('hd:')) {
+    const name = HD_CENTER_NAMES[layer.slice(3)] ?? '';
+    return c === 'определён' ? `транзит определяет твой открытый центр «${name}»` : `центр «${name}» открыт, как обычно`;
+  }
+  switch (layer) {
+    case 'lunarDay':
+      return `идёт ${c}-й лунный день`;
+    case 'phase':
+      return `фаза Луны — ${(A.PHASE_NAMES[c as A.PhaseKey] ?? c).toLowerCase()}`;
+    case 'sign':
+      return `Луна ${A.inSign(c as A.Sign)}`;
+    case 'voc':
+      return c === 'да' ? 'днём бывает Луна без курса' : 'Луны без курса днём нет';
+    default:
+      return `личный день — ${c}`;
+  }
+}
+
+/** Выводы словами (D-140): где оценки заметно выше или ниже. */
+function InsightsCard({ list, metric }: { list: Insight[]; metric: Metric }) {
+  return (
+    <Card className="space-y-3">
+      <Label>Что я заметил</Label>
+      {list.length === 0 ? (
+        <p className="text-[15px] leading-6 text-muted">Явных закономерностей пока нет: оценки почти не зависят от лунных признаков и транзитов. Продолжай записывать, выводы уточняются с каждой неделей.</p>
+      ) : (
+        list.map((x) => (
+          <div key={x.layer} className="flex gap-3">
+            <span className="mt-0.5 text-accent">✦</span>
+            <p className="text-[15px] leading-6">
+              {METRIC_NAME[metric]} выше, когда {cond(x.layer, x.high.category)}: в среднем <b className="tabular-nums">{x.high.mean.toFixed(1)}</b> против{' '}
+              <b className="tabular-nums">{x.low.mean.toFixed(1)}</b>, когда {cond(x.layer, x.low.category)}.
+            </p>
+          </div>
+        ))
+      )}
+      <p className="text-[12px] leading-5 text-faint">Это совпадения в твоих записях, а не правило. Чем больше записей, тем надёжнее.</p>
+    </Card>
   );
 }

@@ -229,6 +229,7 @@ export function Disclosure({ title, subtitle, children, defaultOpen = false, bad
 export function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title?: string; children: ReactNode }) {
   useEffect(() => {
     if (!open) return;
+    haptic.tap('soft');
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {

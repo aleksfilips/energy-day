@@ -4,10 +4,13 @@ import type { VocMode } from '../astro/voc';
 import type { ZodiacMode } from '../astro/zodiac';
 import { BASE, makeContent } from '../content';
 import { computeMonth, computeUpcoming } from '../synthesis/day';
+import { pickDays } from '../synthesis/pick';
+import type { DateKey } from '../astro/time';
 
 export type WorkerRequest =
   | { id: number; type: 'month'; loc: ResolvedLocation; year: number; month: number; daylight: { from: number; to: number }; zodiac: ZodiacMode; vocMode: VocMode }
-  | { id: number; type: 'upcoming'; from: number; days: number; vocMode: VocMode };
+  | { id: number; type: 'upcoming'; from: number; days: number; vocMode: VocMode }
+  | { id: number; type: 'pick'; loc: ResolvedLocation; from: DateKey; days: number; daylight: { from: number; to: number }; zodiac: ZodiacMode; vocMode: VocMode };
 
 const content = makeContent(BASE);
 
@@ -20,6 +23,8 @@ self.onmessage = (ev: MessageEvent<WorkerRequest>) => {
         const e = content.lunarDay(n);
         return { tone: e.energy.tone, attention: e.attention };
       });
+    } else if (r.type === 'pick') {
+      result = pickDays(r.loc, r.from, r.days, r, (n) => content.lunarDay(n).energy.tone);
     } else {
       result = computeUpcoming(new Date(r.from), r.days, r.vocMode);
     }

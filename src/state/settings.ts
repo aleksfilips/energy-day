@@ -33,8 +33,15 @@ export interface Settings {
   telegramBackup: boolean;
   /** Копия профиля (имя, места, рождение) в личном облаке Telegram. По умолчанию включено. */
   cloudProfile: boolean;
-  /** Утреннее сообщение от бота. code — последний отправленный боту код подписки. */
-  morning: { enabled: boolean; hour: number; minute: number; code: string | null };
+  /** Автоматическая копия дневника в личном облаке Telegram после каждой записи (D-141). По умолчанию включено. */
+  autoBackup: boolean;
+  /** Второй человек для совместимости по Дизайну человека (D-143). Только на этом устройстве. */
+  pair: { name: string; birth: BirthData } | null;
+  /**
+   * Утреннее сообщение от бота. code — последний отправленный боту код подписки.
+   * voice — голосовое сообщение (0 нет, 1 Светлана, 2 Дария, 3 Алёна), hd — транзиты Дизайна человека с бодиграфом (D-137).
+   */
+  morning: { enabled: boolean; hour: number; minute: number; code: string | null; voice: 0 | 1 | 2 | 3; hd: boolean };
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -57,7 +64,9 @@ export const DEFAULT_SETTINGS: Settings = {
   haptics: true,
   telegramBackup: false,
   cloudProfile: true,
-  morning: { enabled: false, hour: 7, minute: 30, code: null },
+  autoBackup: true,
+  pair: null,
+  morning: { enabled: false, hour: 7, minute: 30, code: null, voice: 0, hd: true },
 };
 
 /** Аккуратно дополняет сохранённые настройки новыми полями по умолчанию. */

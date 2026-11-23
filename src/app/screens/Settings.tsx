@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { isResolved, type Location } from '../../astro/location';
 import { db } from '../../db';
 import { exportCsv, exportJson, importJson } from '../../diary/backup';
+import { scheduleDiaryBackup } from '../../diary/autoBackup';
 import { cloudAvailable, cloudLoad, cloudSave, downloadText, haptic } from '../../telegram';
 import { clearCloudProfile } from '../../state/profile';
 import { useStore } from '../store';
@@ -232,6 +233,7 @@ export function SettingsScreen({ nav }: { nav: Nav }) {
         {[
           ['profile', 'Мои данные', [settings.name, settings.birthday ? `${settings.birthday.day}.${String(settings.birthday.month).padStart(2, '0')}` : 'дата рождения не указана'].filter(Boolean).join(' · ')],
           ['locations', 'Место', location?.name ?? 'не выбрано'],
+          ['pair', 'Совместимость', settings.pair ? `ты и ${settings.pair.name} · Дизайн человека` : 'сравнить две карты Дизайна человека'],
           ['help', 'Справка', 'что значит каждый блок и как всё считается'],
         ].map(([name, title, sub]) => (
           <button key={name} className="flex w-full items-center justify-between border-t border-line py-4 text-left first:border-t-0" onClick={() => nav.push({ name: name as 'help' })}>
@@ -294,11 +296,22 @@ export function SettingsScreen({ nav }: { nav: Nav }) {
         {cloudAvailable() && (
           <Toggle
             label="Хранить мои данные в Telegram"
-            hint="имя, места и дата рождения в твоём личном облаке Telegram: на новом телефоне не придётся вводить заново. Дневник туда не попадает"
+            hint="имя, места и дата рождения в твоём личном облаке Telegram: на новом телефоне не придётся вводить заново"
             checked={settings.cloudProfile}
             onChange={(v) => {
               void update({ cloudProfile: v });
               if (!v) void clearCloudProfile();
+            }}
+          />
+        )}
+        {cloudAvailable() && (
+          <Toggle
+            label="Копия дневника в Telegram"
+            hint="после каждой записи дневник сам сохраняется в твоё личное облако Telegram. Сменишь телефон — записи вернутся"
+            checked={settings.autoBackup}
+            onChange={(v) => {
+              void update({ autoBackup: v });
+              if (v) scheduleDiaryBackup();
             }}
           />
         )}

@@ -8,6 +8,8 @@ import { useStore } from '../store';
 import { Card } from '../ui';
 import { WhySheet } from './EnergyCard';
 import { AreaGrid, DayStorySheet, HeroCard, MoreTiles, TimeStrip } from './Compact';
+import { WeekAhead } from './Pick';
+import { ShareDay } from './ShareDay';
 import { HdSpotlight } from './HdCard';
 import type { Nav } from '../App';
 
@@ -58,7 +60,8 @@ export function TodayScreen({ nav, openUpcoming }: { nav: Nav; openUpcoming: () 
       />
       <TimeStrip model={model} now={now} />
       <HdSpotlight date={today} />
-      <AreaGrid areas={extra.verdicts} lunarDay={model.dominant.number} />
+      <AreaGrid areas={extra.verdicts} lunarDay={model.dominant.number} onPick={(area) => nav.push({ name: 'pick', area })} />
+      <WeekAhead nav={nav} onPick={() => nav.push({ name: 'pick' })} />
       <MoreTiles
         model={model}
         content={content}
@@ -73,6 +76,7 @@ export function TodayScreen({ nav, openUpcoming }: { nav: Nav; openUpcoming: () 
       <button onClick={() => nav.push({ name: 'day', date: today })} className="mx-auto block py-2 text-[15px] text-accent">
         Весь день подробно ›
       </button>
+      <ShareDay model={model} plan={extra.plan} content={content} place={location.name} />
       <DayStorySheet open={more} onClose={() => setMore(false)} onWhy={() => setWhy(true)} model={model} plan={extra.plan} card={card} content={content} current={current.number} />
       <WhySheet card={card} model={model} open={why} onClose={() => setWhy(false)} />
     </div>

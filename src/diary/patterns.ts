@@ -10,9 +10,12 @@ export const MIN_ENTRIES = 30;
 export const MIN_PER_CATEGORY = 5;
 
 export type Metric = 'energy' | 'mood' | 'sleep' | 'overall';
-export type LayerKey = 'lunarDay' | 'phase' | 'sign' | 'voc' | 'personalDay';
+export type BaseLayer = 'lunarDay' | 'phase' | 'sign' | 'voc' | 'personalDay';
+/** Слой Дизайна человека: открытый центр, который транзит то определяет, то нет (D-140). */
+export type HdLayer = `hd:${string}`;
+export type LayerKey = BaseLayer | HdLayer;
 
-export const LAYER_NAMES: Record<LayerKey, string> = {
+export const LAYER_NAMES: Record<BaseLayer, string> = {
   lunarDay: 'Лунные сутки',
   phase: 'Фаза',
   sign: 'Знак Луны',
@@ -43,9 +46,31 @@ export function metricValue(e: DiaryEntry, m: Metric): number | null {
   return e[m];
 }
 
+export const HD_CENTER_NAMES: Record<string, string> = {
+  head: 'Теменной центр',
+  ajna: 'Аджна',
+  throat: 'Горловой центр',
+  g: 'Джи-центр',
+  heart: 'Сердечный центр (Эго)',
+  spleen: 'Селезёнка',
+  solar: 'Солнечное сплетение',
+  sacral: 'Сакральный центр',
+  root: 'Корневой центр',
+};
+
+export function layerName(l: LayerKey): string {
+  if (l.startsWith('hd:')) return `ДЧ: ${HD_CENTER_NAMES[l.slice(3)] ?? l.slice(3)} от транзита`;
+  return LAYER_NAMES[l as BaseLayer];
+}
+
 function categoryOf(e: DiaryEntry, layer: LayerKey): string | null {
   const s = e.snapshot;
-  switch (layer) {
+  if (layer.startsWith('hd:')) {
+    const c = layer.slice(3);
+    if (!s.hdOpen || !s.hdOwnOpen?.includes(c)) return null;
+    return s.hdOpen.includes(c) ? 'определён' : 'открыт';
+  }
+  switch (layer as BaseLayer) {
     case 'lunarDay':
       return String(s.lunarDay);
     case 'phase':
@@ -96,6 +121,33 @@ export function layerStats(entries: DiaryEntry[], layer: LayerKey, metric: Metri
   return { layer, categories, omega2, n };
 }
 
+/** Вывод словами: где оценка заметно выше или ниже обычного. */
+export interface Insight {
+  layer: LayerKey;
+  high: CategoryStat;
+  low: CategoryStat;
+  diff: number;
+  omega2: number;
+}
+
+/**
+ * Простые выводы: слой с заметной связью (ω² ≥ 4%), разница между лучшей и худшей надёжной категорией ≥ 1 балла.
+ * Сортировка по силе связи; не больше трёх.
+ */
+export function insights(layers: LayerStat[], max = 3): Insight[] {
+  const out: Insight[] = [];
+  for (const l of layers) {
+    if (l.omega2 === null || l.omega2 < 0.04) continue;
+    const ok = l.categories.filter((c) => c.reliable);
+    if (ok.length < 2) continue;
+    const high = ok.reduce((a, b) => (b.mean > a.mean ? b : a));
+    const low = ok.reduce((a, b) => (b.mean < a.mean ? b : a));
+    if (high.mean - low.mean < 1) continue;
+    out.push({ layer: l.layer, high, low, diff: high.mean - low.mean, omega2: l.omega2 });
+  }
+  return out.sort((a, b) => b.omega2 - a.omega2).slice(0, max);
+}
+
 export interface PatternsReport {
   total: number;
   enough: boolean;
@@ -105,7 +157,10 @@ export interface PatternsReport {
 }
 
 export function patterns(entries: DiaryEntry[], metric: Metric = 'overall'): PatternsReport {
-  const layers = (['lunarDay', 'phase', 'sign', 'voc', 'personalDay'] as LayerKey[]).map((l) => layerStats(entries, l, metric));
+  const hdCenters = [...new Set(entries.flatMap((e) => e.snapshot.hdOwnOpen ?? []))].filter((c) => c in HD_CENTER_NAMES);
+  const layers = ([...(['lunarDay', 'phase', 'sign', 'voc', 'personalDay'] as LayerKey[]), ...hdCenters.map((c) => `hd:${c}` as HdLayer)])
+    .map((l) => layerStats(entries, l, metric))
+    .filter((l) => !l.layer.startsWith('hd:') || l.categories.length >= 2);
   const ranked = layers.filter((l) => l.omega2 !== null).sort((a, b) => b.omega2! - a.omega2!);
   const dec = entries.filter((e) => e.decision?.outcome != null);
   const byVoc = [true, false].map((voc) => {

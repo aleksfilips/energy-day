@@ -33,6 +33,7 @@ export type Action =
   | { kind: 'today'; chatId: string; subscribed: boolean }
   | { kind: 'welcome'; chatId: string; firstName: string }
   | { kind: 'bad-code'; chatId: string }
+  | { kind: 'voices'; chatId: string }
   | { kind: 'ignore' };
 
 interface TgUpdate {
@@ -64,7 +65,8 @@ export function applyUpdate(state: BotState, u: TgUpdate, now: Date): Action {
     delete state.subs[chatId];
     return { kind: 'unsubscribed', chatId, wasSubscribed: was };
   }
-  if (command === '/start' && arg.startsWith('a')) {
+  if (command === '/golos' || command === '/voices' || (command === '/start' && arg === 'golos')) return { kind: 'voices', chatId };
+  if (command === '/start' && /^[ac]/.test(arg)) {
     const sub = decodeSubscription(arg);
     if (!sub) return { kind: 'bad-code', chatId };
     const prev = state.subs[chatId];

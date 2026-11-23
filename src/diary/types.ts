@@ -17,6 +17,13 @@ export interface DaySnapshot {
   voc: boolean;
   personalDay: number | null;
   locationId: string;
+  /**
+   * Дизайн человека (D-140): какие из своих открытых центров в этот день определял транзит
+   * (хотя бы часть дня). undefined — запись сделана без данных рождения или до этой версии.
+   */
+  hdOpen?: string[];
+  /** Все свои открытые центры на момент записи (чтобы «открыт» отличать от «нет данных»). */
+  hdOwnOpen?: string[];
 }
 
 export interface DiaryEntry {

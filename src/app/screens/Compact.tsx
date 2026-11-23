@@ -2,7 +2,7 @@
  * Компактный «Сегодня»: всё главное на первом экране, подробности — по нажатию.
  * Герой (Луна, лунный день, настроение, суть), полоска времени, плитки 20 сфер, плитки «ещё на сегодня».
  */
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import * as A from '../../astro';
 import type { Content } from '../../content';
 import { dreamsVerdict, type AreaKey, type AreaVerdict, type Verdict } from '../../synthesis/areas';
@@ -17,7 +17,7 @@ import { ABOUT, AREA_ABOUT, moodAbout, plainText, VERDICT_ABOUT } from '../../sy
 import type { EnergyCard } from '../../synthesis/rules';
 import { About, GoodBad, SubTitle, Tip } from './Explain';
 
-const SHORT: Record<AreaKey, string> = {
+export const SHORT: Record<AreaKey, string> = {
   start: 'Новое',
   business: 'Работа',
   money: 'Деньги',
@@ -48,10 +48,16 @@ export const V: Record<Verdict, { label: string; color: string; soft: string }> 
 
 const MOOD: Record<DayPlan['mood']['kind'], string> = { active: 'var(--accent)', even: 'var(--silver)', calm: 'var(--tone-calm)' };
 
-function Panel({ children, className, onClick }: { children: ReactNode; className?: string; onClick?: () => void }) {
+export function Panel({ children, className, onClick }: { children: ReactNode; className?: string; onClick?: () => void }) {
   return (
     <div
-      onClick={onClick}
+      onClick={
+        onClick &&
+        (() => {
+          haptic.select();
+          onClick();
+        })
+      }
       style={{ boxShadow: 'var(--shadow)' }}
       className={cx('rounded-[24px] border border-line bg-surface', onClick && 'cursor-pointer transition-transform active:scale-[0.985]', className)}
     >
@@ -144,7 +150,7 @@ export function HeroCard({
   );
 }
 
-/** Полоска времени в одну строку: удачное окно, Луна без курса, Солнце, «сейчас». */
+/** «Время дня»: дуга Солнца с окнами для важного, Луной без курса, восходом, закатом и «сейчас». */
 export function TimeStrip({ model, now }: { model: DayModel; now?: Date }) {
   const { from, to } = model.window;
   const span = to.getTime() - from.getTime();
@@ -167,32 +173,19 @@ export function TimeStrip({ model, now }: { model: DayModel; now?: Date }) {
           </span>
         )}
       </div>
-      <div className="relative mt-3 h-3 overflow-hidden rounded-full bg-good-soft">
-        {sunrise && sunrise > from && <div className="absolute inset-y-0 left-0 bg-[var(--night)]" style={{ width: `${pos(sunrise)}%` }} />}
-        {sunset && sunset < to && <div className="absolute inset-y-0 right-0 bg-[var(--night)]" style={{ left: `${pos(sunset)}%` }} />}
-        {voc.map((w) => (
-          <div key={w.from.getTime()} className="absolute inset-y-0 bg-care" style={{ left: `${pos(w.from)}%`, width: `${pos(w.to) - pos(w.from)}%`, opacity: 0.75 }} />
-        ))}
-        {changes.map((c) => (
-          <span key={c.from.getTime()} className="absolute inset-y-0 w-[2px] bg-accent" style={{ left: `${pos(c.from)}%` }} />
-        ))}
-        {now && now > from && now < to && <span className="absolute -inset-y-0 w-[3px] -translate-x-1/2 rounded bg-ink" style={{ left: `${pos(now)}%` }} />}
-      </div>
-      <div className="mt-1 flex justify-between text-[11px] tabular-nums text-faint">
-        <span>{t(from)}</span>
-        <span>{t(new Date(from.getTime() + span / 2))}</span>
-        <span>{t(to)}</span>
-      </div>
-      <div className="mt-2 space-y-1 text-[14px] leading-5">
-        <div>
-          <span className="text-good">●</span> Для важного: {good.length ? good.map((w) => spanText(w, tz)).join(', ') : 'сегодня лучше без начинаний'}
-        </div>
-        {voc.length > 0 && (
-          <div>
-            <span className="text-care">●</span> Луна без курса {voc.map((w) => spanText(w, tz)).join(', ')}: новое не начинать
-          </div>
-        )}
-      </div>
+      <SunArc
+        pos={pos}
+        from={from}
+        to={to}
+        good={good}
+        voc={voc}
+        changes={changes.map((c) => c.from)}
+        sunrise={sunrise}
+        sunset={sunset}
+        now={now}
+        t={t}
+        tz={tz}
+      />
     </Panel>
     <Sheet open={open} onClose={() => setOpen(false)} title="Время дня">
       <TimeExplain model={model} />
@@ -201,7 +194,181 @@ export function TimeStrip({ model, now }: { model: DayModel; now?: Date }) {
   );
 }
 
-/** Полное пояснение к полоске времени. */
+type Span = { from: Date; to: Date };
+
+/**
+ * «Время дня» дугой Солнца (D-136): день — путь по небу от начала до конца окна дня.
+ * Золотые участки — время для важного (до восхода и после заката приглушены), медный пунктир — Луна без курса,
+ * точки — восход и закат, золотая черточка — смена лунного дня, светящееся Солнце — «сейчас».
+ */
+function SunArc({
+  pos,
+  from,
+  to,
+  good,
+  voc,
+  changes,
+  sunrise,
+  sunset,
+  now,
+  t,
+  tz,
+}: {
+  pos: (d: Date) => number;
+  from: Date;
+  to: Date;
+  good: Span[];
+  voc: Span[];
+  changes: Date[];
+  sunrise: Date | null | undefined;
+  sunset: Date | null | undefined;
+  now?: Date;
+  t: (d: Date) => string;
+  tz: string;
+}) {
+  const uid = useId().replace(/:/g, '');
+  const gold = `ts-gold-${uid}`;
+  const glow = `ts-glow-${uid}`;
+  const halo = `ts-halo-${uid}`;
+  const core = `ts-core-${uid}`;
+  const beam = `ts-beam-${uid}`;
+  const nowIn = now && now > from && now < to ? now : null;
+  const W = 320;
+  const H = 104;
+  const BASE = 88;
+  const PAD = 10;
+  // Точка дуги: x — равномерно по времени, y — полусинус (как путь Солнца), вершина на 14 px от верха.
+  const pt = (d: Date): [number, number] => {
+    const f = pos(d) / 100;
+    return [PAD + f * (W - 2 * PAD), BASE - Math.sin(f * Math.PI) * (BASE - 14)];
+  };
+  const arc = (a: Date, b: Date) => {
+    const n = Math.max(2, Math.round(((b.getTime() - a.getTime()) / (to.getTime() - from.getTime())) * 80));
+    let d = '';
+    for (let i = 0; i <= n; i++) {
+      const [x, y] = pt(new Date(a.getTime() + ((b.getTime() - a.getTime()) * i) / n));
+      d += `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)} `;
+    }
+    return d;
+  };
+  const clip = (w: Span, a: Date, b: Date): Span | null => {
+    const f = w.from > a ? w.from : a;
+    const e = w.to < b ? w.to : b;
+    return f < e ? { from: f, to: e } : null;
+  };
+  const dayFrom = sunrise && sunrise > from ? sunrise : from;
+  const dayTo = sunset && sunset < to ? sunset : to;
+  const goodDay = good.map((w) => clip(w, dayFrom, dayTo)).filter((x): x is Span => !!x);
+  const goodNight = good.flatMap((w) => [clip(w, from, dayFrom), clip(w, dayTo, to)]).filter((x): x is Span => !!x);
+  const np = nowIn ? pt(nowIn) : null;
+  return (
+    <>
+      <svg viewBox={`0 0 ${W} ${H}`} className="mt-2 block w-full overflow-visible" aria-hidden>
+        <defs>
+          <linearGradient id={gold} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stopColor="#c8924a" />
+            <stop offset="0.5" stopColor="#f8e3b5" />
+            <stop offset="1" stopColor="#c8924a" />
+          </linearGradient>
+          <radialGradient id={halo}>
+            <stop offset="0" stopColor="#f8e3b5" stopOpacity="0.75" />
+            <stop offset="0.55" stopColor="#ecc98f" stopOpacity="0.25" />
+            <stop offset="1" stopColor="#ecc98f" stopOpacity="0" />
+          </radialGradient>
+          <radialGradient id={core} cx="0.4" cy="0.38">
+            <stop offset="0" stopColor="#fffdf6" />
+            <stop offset="0.45" stopColor="#f8e3b5" />
+            <stop offset="1" stopColor="#c8924a" />
+          </radialGradient>
+          <linearGradient id={beam} gradientUnits="userSpaceOnUse" x1="0" y1={np ? np[1] : 0} x2="0" y2={BASE + 6}>
+            <stop offset="0" stopColor="#ecc98f" stopOpacity="0.8" />
+            <stop offset="1" stopColor="#ecc98f" stopOpacity="0" />
+          </linearGradient>
+          <filter id={glow} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        {/* Горизонт */}
+        <line x1={PAD} y1={BASE + 6} x2={W - PAD} y2={BASE + 6} stroke="var(--ink)" strokeOpacity="0.12" strokeWidth="1" strokeDasharray="2 4" />
+        {/* Путь дня */}
+        <path d={arc(from, to)} fill="none" stroke="var(--ink)" strokeOpacity="0.13" strokeWidth="3" strokeLinecap="round" />
+        {nowIn && <path d={arc(from, nowIn)} fill="none" stroke="var(--ink)" strokeOpacity="0.1" strokeWidth="3" strokeLinecap="round" />}
+        {goodNight.map((w) => (
+          <path key={`n${w.from.getTime()}`} d={arc(w.from, w.to)} fill="none" stroke={`url(#${gold})`} strokeOpacity="0.72" strokeWidth="4" strokeLinecap="round" />
+        ))}
+        {goodDay.map((w) => (
+          <path key={`g${w.from.getTime()}`} d={arc(w.from, w.to)} fill="none" stroke={`url(#${gold})`} strokeWidth="5" strokeLinecap="round" filter={`url(#${glow})`} />
+        ))}
+        {voc.map((w) => (
+          <path key={`v${w.from.getTime()}`} d={arc(w.from, w.to)} fill="none" stroke="var(--care)" strokeWidth="3" strokeDasharray="2.5 4.5" strokeLinecap="round" />
+        ))}
+        {/* Восход и закат */}
+        {[sunrise, sunset].map((d, i) => {
+          if (!d || d <= from || d >= to) return null;
+          const [x, y] = pt(d);
+          return (
+            <g key={i}>
+              <line x1={x} y1={y + 6} x2={x} y2={BASE + 6} stroke="var(--ink)" strokeOpacity="0.14" strokeWidth="1" />
+              <circle cx={x} cy={y} r="3.4" fill="var(--surface)" stroke="var(--ink)" strokeOpacity="0.45" strokeWidth="1.2" />
+            </g>
+          );
+        })}
+        {/* Смена лунного дня */}
+        {changes.map((d) => {
+          const [x, y] = pt(d);
+          return <line key={d.getTime()} x1={x} y1={y - 7} x2={x} y2={y + 7} stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" />;
+        })}
+        {/* Сейчас: Солнце на дуге — сияние, лучи, луч света к горизонту */}
+        {np && (
+          <g>
+            <line x1={np[0]} y1={np[1] + 9} x2={np[0]} y2={BASE + 6} stroke={`url(#${beam})`} strokeWidth="1.6" />
+            <circle cx={np[0]} cy={BASE + 6} r="2" fill="#e7bd7c" />
+            <circle cx={np[0]} cy={np[1]} r="16" fill={`url(#${halo})`}>
+              <animate attributeName="r" values="14;19;14" dur="4s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.9;0.55;0.9" dur="4s" repeatCount="indefinite" />
+            </circle>
+            <g transform={`translate(${np[0]} ${np[1]})`}>
+              <g>
+                {Array.from({ length: 12 }, (_, i) => (
+                  <line key={i} x1="0" y1="-9.5" x2="0" y2={i % 2 ? '-12' : '-14'} stroke="#f3d9a4" strokeWidth="1.3" strokeLinecap="round" transform={`rotate(${i * 30})`} opacity="0.9" />
+                ))}
+                <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="40s" repeatCount="indefinite" />
+              </g>
+              <circle r="7" fill={`url(#${core})`} filter={`url(#${glow})`} />
+            </g>
+          </g>
+        )}
+      </svg>
+      <div className="relative -mt-0.5 h-4 text-[11px] tabular-nums text-faint">
+        <span className="absolute left-0">{t(from)}</span>
+        {nowIn && (
+          <span className="absolute -translate-x-1/2 font-medium text-accent" style={{ left: `${Math.min(88, Math.max(12, pos(nowIn)))}%` }}>
+            сейчас {t(nowIn)}
+          </span>
+        )}
+        <span className="absolute right-0">{t(to)}</span>
+      </div>
+      <div className="mt-3 space-y-1.5 text-[14px] leading-5">
+        <div className="flex items-baseline gap-2">
+          <span className="w-[118px] shrink-0 whitespace-nowrap text-[10.5px] font-medium uppercase tracking-[0.08em] text-accent">Для важного</span>
+          <span className="font-medium tabular-nums">{good.length ? good.map((w) => spanText(w, tz)).join(' · ') : 'сегодня лучше без начинаний'}</span>
+        </div>
+        {voc.length > 0 && (
+          <div className="flex items-baseline gap-2">
+            <span className="w-[118px] shrink-0 whitespace-nowrap text-[10.5px] font-medium uppercase tracking-[0.08em] text-care">Луна без курса</span>
+            <span className="font-medium tabular-nums">{voc.map((w) => spanText(w, tz)).join(' · ')}</span>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+/** Полное пояснение к «Времени дня». */
 export function TimeExplain({ model }: { model: DayModel }) {
   const { content } = useStore();
   const tz = model.location.timeZone;
@@ -233,19 +400,19 @@ export function TimeExplain({ model }: { model: DayModel }) {
       {changes.map((c) => (
         <div key={c.from.getTime()}>
           <SubTitle color="var(--accent)">│ Смена лунного дня</SubTitle>
-          <p className="text-[16px] leading-6">В {t(c.from)} взойдёт Луна, и начнётся {ord(c.day.number)} лунный день. Золотая черта на полоске — этот момент.</p>
+          <p className="text-[16px] leading-6">В {t(c.from)} взойдёт Луна, и начнётся {ord(c.day.number)} лунный день. Золотая черточка на дуге — этот момент.</p>
         </div>
       ))}
       {sunrise && sunset && (
         <div>
           <SubTitle>☀️ Солнце</SubTitle>
           <p className="text-[16px] leading-6">
-            Восход {t(sunrise)}, закат {t(sunset)}. Тёмные края полоски — время до восхода и после заката.
+            Восход {t(sunrise)}, закат {t(sunset)}. Точки на дуге — восход и закат; золото до восхода и после заката приглушено.
           </p>
         </div>
       )}
       <p className="text-[13px] leading-5 text-faint">
-        Полоска — это день с {t(model.window.from)} до {t(model.window.to)}, яркая черта — «сейчас». Границы дня можно поменять в настройках.
+        Дуга — это день с {t(model.window.from)} до {t(model.window.to)}, как путь Солнца по небу. Золотые участки — время для важного, медный пунктир — Луна без курса, светящееся Солнце — «сейчас». Границы дня можно поменять в настройках.
       </p>
     </div>
   );
@@ -260,7 +427,7 @@ const SOON_MEANS = {
 const GROUP_TITLE: Record<Verdict, string> = { good: 'Благоприятно', neutral: 'Нейтрально', bad: 'Лучше не стоит' };
 
 /** 20 сфер плиткой по 4 в ряд, сгруппированы: сначала благоприятное, потом нейтральное, потом неблагоприятное. */
-export function AreaGrid({ areas, lunarDay }: { areas: AreaVerdict[]; lunarDay: number }) {
+export function AreaGrid({ areas, lunarDay, onPick }: { areas: AreaVerdict[]; lunarDay: number; onPick?: (area: AreaKey) => void }) {
   const [open, setOpen] = useState<AreaVerdict | null>(null);
   const [dreamsOpen, setDreamsOpen] = useState(false);
   const [help, setHelp] = useState(false);
@@ -343,6 +510,20 @@ export function AreaGrid({ areas, lunarDay }: { areas: AreaVerdict[]; lunarDay: 
               {AREA_ABOUT[open.key]}
             </p>
             <p className="mt-3 text-[13px] leading-5 text-faint">По {lunarDay}-му лунному дню, по традиции. Это ориентир, решение за тобой.</p>
+            {onPick && (
+              <button
+                onClick={() => {
+                  const k = open.key;
+                  setOpen(null);
+                  onPick(k);
+                }}
+                className="mt-5 flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[15px] font-medium text-accent"
+                style={{ background: 'color-mix(in srgb, var(--accent) 13%, transparent)' }}
+              >
+                <span>📅 Когда для этого лучший день?</span>
+                <span>›</span>
+              </button>
+            )}
           </div>
         )}
       </Sheet>

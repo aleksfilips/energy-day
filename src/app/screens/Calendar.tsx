@@ -56,6 +56,19 @@ export function CalendarScreen({ nav, ym, setYm }: { nav: Nav; ym: { y: number; 
         </button>
       </header>
 
+      <button
+        onClick={() => nav.push({ name: 'pick' })}
+        className="mb-4 flex w-full items-center gap-3 rounded-2xl border border-line px-4 py-3 text-left transition active:scale-[0.985]"
+        style={{ background: 'color-mix(in srgb, var(--accent) 10%, var(--surface))' }}
+      >
+        <span className="text-[20px]">📅</span>
+        <span className="flex-1">
+          <span className="block text-[15px] font-medium">Подобрать день для дела</span>
+          <span className="block text-[13px] text-muted">стрижка, сделка, поездка, свадьба…</span>
+        </span>
+        <span className="text-accent">›</span>
+      </button>
+
       <div className="grid grid-cols-7 gap-1.5 text-center">
         {WEEKDAYS_SHORT.map((w) => (
           <div key={w} className="pb-1 text-[12px] text-faint">

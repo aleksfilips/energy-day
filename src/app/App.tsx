@@ -9,6 +9,10 @@ import { CalendarScreen } from './screens/Calendar';
 import { DayScreen } from './screens/Day';
 import { DiaryScreen, EntryScreen } from './screens/Diary';
 import { HelpScreen } from './screens/Help';
+import { PickScreen } from './screens/Pick';
+import { PairScreen } from './screens/Pair';
+import { restoreDiaryIfEmpty } from '../diary/autoBackup';
+import type { AreaKey } from '../synthesis/areas';
 import { Onboarding } from './screens/Onboarding';
 import { ProfileScreen } from './screens/Profile';
 import { ReviewScreen } from './screens/Review';
@@ -23,7 +27,9 @@ export type Route =
   | { name: 'locations' }
   | { name: 'profile' }
   | { name: 'review' }
-  | { name: 'help' };
+  | { name: 'help' }
+  | { name: 'pick'; area?: AreaKey }
+  | { name: 'pair' };
 
 export interface Nav {
   push: (r: Route) => void;
@@ -99,6 +105,10 @@ export function App() {
 
   const back = useCallback(() => setStack((s) => s.slice(0, -1)), []);
   useEffect(() => useTelegramBack(stack.length ? back : null), [stack.length, back]);
+  // Новый телефон: вернуть дневник из облака Telegram, если здесь он пуст (D-141).
+  useEffect(() => {
+    if (ready && settings.onboarded) void restoreDiaryIfEmpty();
+  }, [ready, settings.onboarded]);
   useEffect(() => {
     scroller.current?.scrollTo({ top: 0 });
   }, [tab, stack]);
@@ -122,6 +132,10 @@ export function App() {
         <ProfileScreen nav={nav} />
       ) : top.name === 'review' ? (
         <ReviewScreen nav={nav} />
+      ) : top.name === 'pair' ? (
+        <PairScreen nav={nav} />
+      ) : top.name === 'pick' ? (
+        <PickScreen nav={nav} initial={top.area} />
       ) : (
         <HelpScreen onReview={() => nav.push({ name: 'review' })} />
       );
@@ -149,7 +163,7 @@ export function App() {
               ‹ Назад
             </button>
           )}
-          <div key={top ? `${top.name}` : tab} className="fade-in">
+          <div key={top ? `${stack.length}-${top.name}` : tab} className={top ? 'push-in' : 'fade-in'}>
             {screen}
           </div>
         </div>
