@@ -7,7 +7,9 @@ import * as A from '../../astro';
 import { AREAS, type AreaKey, type Verdict } from '../../synthesis/areas';
 import { bestDays, rankDays, type PickDay, type PickSpan, type Ranked } from '../../synthesis/pick';
 import { compute } from '../../worker/client';
-import { haptic } from '../../telegram';
+import { haptic, tg } from '../../telegram';
+import { BOT_USERNAME } from '../../config';
+import { encodeReminder } from '../../bot/reminder';
 import { humanDate, parseKey, plural, WEEKDAYS_SHORT } from '../format';
 import { useToday } from '../hooks';
 import { useStore } from '../store';
@@ -108,6 +110,7 @@ export function PickScreen({ nav, initial }: { nav: Nav; initial?: AreaKey }) {
                   <span className="text-[13px] font-medium" style={{ color: V[r.verdict].color }}>
                     {r.verdict === 'good' ? 'хорошо' : 'можно'}
                   </span>
+                  {BOT_USERNAME && r.day.date > today && <RemindButton date={r.day.date} area={area} label="🔔" />}
                 </Panel>
               ))}
             </div>
@@ -150,6 +153,26 @@ function DateBadge({ date, big = false }: { date: A.DateKey; big?: boolean }) {
   );
 }
 
+/** «Напомнить накануне» (D-146): открывает бота со ссылкой-напоминанием, бот напишет в 20:00 накануне. */
+function RemindButton({ date, area, label }: { date: A.DateKey; area: AreaKey; label: string }) {
+  return (
+    <button
+      aria-label="Напомнить накануне"
+      onClick={(e) => {
+        e.stopPropagation();
+        haptic.success();
+        const url = `https://t.me/${BOT_USERNAME.replace(/^@/, '')}?start=${encodeReminder({ date, area })}`;
+        const t = tg();
+        if (t?.openTelegramLink) t.openTelegramLink(url);
+        else window.open(url, '_blank', 'noopener');
+      }}
+      className={cx('shrink-0 rounded-full border border-line text-[14px] text-ink', label.length > 2 ? 'px-3.5 py-1.5' : 'grid h-9 w-9 place-items-center')}
+    >
+      {label}
+    </button>
+  );
+}
+
 function BestCard({ r, area, today, tz, onOpen }: { r: Ranked; area: AreaKey; today: A.DateKey; tz: string; onOpen: () => void }) {
   const def = AREAS.find((a) => a.key === area)!;
   return (
@@ -188,7 +211,14 @@ function BestCard({ r, area, today, tz, onOpen }: { r: Ranked; area: AreaKey; to
           </div>
         )}
         {r.day.voc.length > 0 && <div className="mt-2 px-1 text-[13px] text-muted">Луна без курса {spans(r.day.voc, tz)} — в эти часы не начинай.</div>}
-        <div className="mt-4 text-right text-[14px] font-medium text-accent">Открыть день ›</div>
+        <div className="mt-4 flex items-center justify-between gap-3">
+          {BOT_USERNAME && r.day.date > today ? (
+            <RemindButton date={r.day.date} area={area} label="🔔 Напомнить накануне" />
+          ) : (
+            <span />
+          )}
+          <span className="text-[14px] font-medium text-accent">Открыть день ›</span>
+        </div>
       </div>
     </Panel>
   );

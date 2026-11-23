@@ -124,7 +124,7 @@ describe('переход владельца на новую версию', () =>
     expect(s.locations).toEqual([KALINOVO]);
     expect(s.birthday).toEqual({ day: 30, month: 6 });
     expect(s.name).toBeNull();
-    expect(s.morning).toEqual({ enabled: false, hour: 7, minute: 30, code: null, voice: 0, hd: true });
+    expect(s.morning).toEqual({ enabled: false, hour: 7, minute: 30, code: null, voice: 0, hd: true, changes: true, voc: true, sunGate: true, evening: 1260 });
     expect(s.cloudProfile).toBe(true);
   });
   it('у нового человека нет ни одного готового места', async () => {

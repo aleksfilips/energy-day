@@ -35,9 +35,9 @@ const MONTHS = ['января', 'февраля', 'марта', 'апреля', 
 const WD = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
-const dot = (s: string) => (/[.!?…»]$/.test(s.trim()) ? s.trim() : `${s.trim()}.`);
+export const dot = (s: string) => (/[.!?…»]$/.test(s.trim()) ? s.trim() : `${s.trim()}.`);
 /** Для слуха: убрать скобки, тире между числами читать как «и», кавычки не нужны. */
-const speak = (s: string) =>
+export const speak = (s: string) =>
   s
     .replace(/(\d+)–(\d+)/g, '$1 и $2')
     .replace(/\s*\(([^)]*)\)/g, ', $1,')

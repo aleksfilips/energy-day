@@ -10,6 +10,7 @@ import { Button, Card, cx, Label, Segmented, Toggle } from '../ui';
 import type { Nav } from '../App';
 import { InviteCard } from './Invite';
 import { MorningCard } from './Morning';
+import { HomeScreenCard } from './HomeScreen';
 import { PlaceConfirm, PlaceSearch } from './PlaceSearch';
 import { placeToLocation } from './Profile';
 import type { Place } from '../../places/geocode';
@@ -226,6 +227,7 @@ export function SettingsScreen({ nav }: { nav: Nav }) {
         <div className="font-display text-[28px] font-semibold">Ещё</div>
       </header>
 
+      <HomeScreenCard />
       <InviteCard />
       <MorningCard />
 

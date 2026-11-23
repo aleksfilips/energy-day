@@ -6,7 +6,12 @@
  *
  * Версия 'c' (D-137) добавляет голос и Дизайн человека:
  *   'c' + base64url( те же 12 байт | флаги | момент рождения в минутах от 1900-01-01 UTC, uint32 (0 — нет) | зона )
- *   флаги: биты 0–1 — голос (0 нет, 1 Светлана, 2 Дария, 3 Алёна), бит 2 — транзиты Дизайна человека с бодиграфом.
+ *   флаги: биты 0–1 — голос (0 нет, 1 Светлана, 2 Дария, 3 Алёна), бит 2 — транзиты Дизайна человека с бодиграфом,
+ *   бит 3 — НЕ присылать уведомление о смене лунного дня (D-145; по умолчанию уведомления включены у всех).
+ * Версия 'd' (D-146) — то же, что 'c', плюс байт вечернего времени перед зоной:
+ *   'd' + base64url( 12 байт | флаги | момент рождения uint32 | вечер (0 — нет, иначе час×4 + минуты/15 + 1) | зона )
+ *   флаги дополнительно: бит 4 — предупреждать о Луне без курса, бит 5 — Солнце в новых воротах (Дизайн человека).
+ *   Коды 'a' и 'c' по-прежнему читаются (у них эти уведомления выключены, смена дня — включена).
  * Код открытый, но читает его только бот: человек сам отправляет его боту в личном чате, бот хранит список зашифрованным.
  */
 
@@ -26,13 +31,21 @@ export interface Subscription {
   hd?: boolean;
   /** Момент рождения, UTC, мс (для Дизайна человека). */
   birthUtc?: number;
+  /** Уведомлять о смене лунного дня (по умолчанию да). */
+  changes?: boolean;
+  /** Предупреждать за 15 минут о Луне без курса. */
+  voc?: boolean;
+  /** Сообщать, когда Солнце входит в новые ворота (нужен Дизайн человека). */
+  sunGate?: boolean;
+  /** Вечерний вопрос для дневника: минуты от полуночи (шаг 15 минут); нет — выключено. */
+  evening?: number;
 }
 
 export type VoiceId = 0 | 1 | 2 | 3;
 export const VOICE_NAMES: Record<Exclude<VoiceId, 0>, string> = { 1: 'Светлана', 2: 'Дария', 3: 'Алёна' };
 
 const EPOCH_1900 = Date.UTC(1900, 0, 1);
-const hasExtras = (s: Subscription) => !!s.voice || (!!s.hd && s.birthUtc !== undefined);
+const hasExtras = (s: Subscription) => !!s.voice || (!!s.hd && s.birthUtc !== undefined) || s.changes === false || !!s.voc || !!s.sunGate || s.evening !== undefined;
 
 const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
 
@@ -98,26 +111,30 @@ function head(bytes: Uint8Array, s: Subscription): void {
 
 function encodeV2(s: Subscription): string {
   const tz = s.timeZone;
-  const bytes = new Uint8Array(17 + tz.length);
+  const bytes = new Uint8Array(18 + tz.length);
   head(bytes, s);
-  const hd = !!s.hd && s.birthUtc !== undefined;
-  bytes[12] = (s.voice ?? 0) | (hd ? 4 : 0);
-  const mins = hd ? Math.round((s.birthUtc! - EPOCH_1900) / 60000) : 0;
+  const birth = s.birthUtc !== undefined && (!!s.hd || !!s.sunGate);
+  bytes[12] = (s.voice ?? 0) | (s.hd && birth ? 4 : 0) | (s.changes === false ? 8 : 0) | (s.voc ? 16 : 0) | (s.sunGate && birth ? 32 : 0);
+  const mins = birth ? Math.round((s.birthUtc! - EPOCH_1900) / 60000) : 0;
   new DataView(bytes.buffer).setUint32(13, Math.max(0, mins));
-  for (let i = 0; i < tz.length; i++) bytes[17 + i] = tz.charCodeAt(i);
-  return `c${b64url(bytes)}`;
+  bytes[17] = s.evening !== undefined ? Math.floor(s.evening / 15) + 1 : 0;
+  for (let i = 0; i < tz.length; i++) bytes[18 + i] = tz.charCodeAt(i);
+  return `d${b64url(bytes)}`;
 }
 
 export function decodeSubscription(code: string): Subscription | null {
-  if (!/^[ac]/.test(code) || code.length > MAX_START) return null;
-  const v2 = code[0] === 'c';
+  if (!/^[acd]/.test(code) || code.length > MAX_START) return null;
+  const v2 = code[0] !== 'a';
+  const v3 = code[0] === 'd';
+  const tzAt = v3 ? 18 : v2 ? 17 : 12;
   const bytes = unb64url(code.slice(1));
-  if (!bytes || bytes.length < (v2 ? 18 : 13)) return null;
+  if (!bytes || bytes.length < tzAt + 1) return null;
   const dv = new DataView(bytes.buffer);
   const latitude = dv.getInt32(0) / 1e5;
   const longitude = dv.getInt32(4) / 1e5;
   const [birthDay, birthMonth, hour, minute] = [bytes[8]!, bytes[9]!, bytes[10]!, bytes[11]!];
-  const timeZone = String.fromCharCode(...bytes.slice(v2 ? 17 : 12));
+  const timeZone = String.fromCharCode(...bytes.slice(tzAt));
+  const eve = v3 ? bytes[17]! : 0;
   const flags = v2 ? bytes[12]! : 0;
   const mins = v2 ? dv.getUint32(13) : 0;
   const ok =
@@ -128,14 +145,24 @@ export function decodeSubscription(code: string): Subscription | null {
     (birthDay === 0) === (birthMonth === 0) &&
     hour < 24 &&
     minute < 60 &&
-    flags < 8 &&
-    (!(flags & 4) || mins > 0) &&
+    flags < (v3 ? 64 : 16) &&
+    (!(flags & 36) || mins > 0) &&
+    eve <= 96 &&
     /^[A-Za-z0-9_+\-/]+$/.test(timeZone);
   if (!ok) return null;
   const base: Subscription = { latitude, longitude, timeZone, birthDay, birthMonth, hour, minute };
   if (!v2) return base;
   const voice = (flags & 3) as VoiceId;
-  return { ...base, voice, hd: !!(flags & 4), ...(flags & 4 ? { birthUtc: EPOCH_1900 + mins * 60000 } : {}) };
+  return {
+    ...base,
+    voice,
+    hd: !!(flags & 4),
+    ...(flags & 36 ? { birthUtc: EPOCH_1900 + mins * 60000 } : {}),
+    ...(flags & 8 ? { changes: false } : {}),
+    ...(flags & 16 ? { voc: true } : {}),
+    ...(flags & 32 ? { sunGate: true } : {}),
+    ...(eve ? { evening: (eve - 1) * 15 } : {}),
+  };
 }
 
 /** Ссылка на бота с кодом подписки. */

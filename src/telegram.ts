@@ -132,3 +132,22 @@ export function downloadText(filename: string, text: string, mime = 'application
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
+
+/** Значок приложения на главном экране телефона (Telegram 8.0+, D-146). */
+export type HomeScreenStatus = 'unsupported' | 'unknown' | 'added' | 'missed';
+export function homeScreenStatus(cb: (s: HomeScreenStatus) => void): void {
+  const t = tg();
+  if (!t?.addToHomeScreen || !t.isVersionAtLeast?.('8.0')) return cb('unsupported');
+  try {
+    t.checkHomeScreenStatus((s: HomeScreenStatus) => cb(s));
+  } catch {
+    cb('unknown');
+  }
+}
+export function addToHomeScreen(): void {
+  try {
+    tg()?.addToHomeScreen?.();
+  } catch {
+    /* старые клиенты */
+  }
+}

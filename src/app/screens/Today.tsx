@@ -7,7 +7,7 @@ import { useDay, useNow, useToday } from '../hooks';
 import { useStore } from '../store';
 import { Card } from '../ui';
 import { WhySheet } from './EnergyCard';
-import { AreaGrid, DayStorySheet, HeroCard, MoreTiles, TimeStrip } from './Compact';
+import { AreaGrid, DayStorySheet, HeroCard, MoreTiles, NowDayCard, TimeStrip } from './Compact';
 import { WeekAhead } from './Pick';
 import { ShareDay } from './ShareDay';
 import { HdSpotlight } from './HdCard';
@@ -58,6 +58,7 @@ export function TodayScreen({ nav, openUpcoming }: { nav: Nav; openUpcoming: () 
         onWhy={() => setWhy(true)}
         onMore={() => setMore(true)}
       />
+      <NowDayCard current={current} dominant={model.dominant.number} dayStart={model.bounds.start} now={now} content={content} timeZone={location.timeZone} />
       <TimeStrip model={model} now={now} />
       <HdSpotlight date={today} />
       <AreaGrid areas={extra.verdicts} lunarDay={model.dominant.number} onPick={(area) => nav.push({ name: 'pick', area })} />

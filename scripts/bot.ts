@@ -2,6 +2,8 @@
  * Бот «Энергия дня» без своего сервера. Запускается GitHub Actions каждые 10 минут (.github/workflows/bot.yml):
  *  1) забирает новые сообщения боту (getUpdates): подписка по коду из приложения, /stop, /today;
  *  2) отправляет утреннее сообщение тем, у кого по их местному времени наступило выбранное время;
+ *     и короткое уведомление, когда начинается новый лунный день (D-145);
+ *     Луна без курса, вечерний вопрос, Солнце в новых воротах, напоминания о выбранных днях (D-146);
  *  3) сохраняет список подписчиков ЗАШИФРОВАННЫМ (AES-256-GCM, ключ — секрет BOT_DATA_KEY) в ветку bot-data.
  * В журналах (они в публичном репозитории видны всем) печатаются только количества, без личных данных.
  *
@@ -21,6 +23,11 @@ import { hdMorning } from '../src/bot/hd';
 import { morningSpeech } from '../src/bot/speech';
 import { VOICE_NAMES, type VoiceId } from '../src/bot/payload';
 import { synth } from './tts';
+import { changeDue, changeText } from '../src/bot/change';
+import { REMIND_AT, changeSpeech, eveningDue, eveningText, remindersDue, reminderText, sunGateDue, sunGateText, vocDue, vocText } from '../src/bot/alerts';
+import { AREAS } from '../src/synthesis/areas';
+import { WIDGET_HTML, widgetCaption, widgetData } from '../src/bot/widget';
+import * as A from '../src/astro';
 import { applyUpdate, emptyState, isDue, localTime, type Action, type BotState, type Subscriber } from '../src/bot/state';
 import { SITE_URL } from '../src/config';
 
@@ -139,8 +146,25 @@ function heading(date: string): string {
  * Утреннее сообщение целиком: голос (если выбран), текст, затем Дизайн человека — картинка и разбор (если включён).
  * Возвращает ответ на основной текст: по нему понимаем, доставлено ли.
  */
+/** Живая карточка дня (виджет Telegram, D-147). Если Telegram её не принимает — до конца запуска больше не пробуем. */
+let widgetsOk = env('BOT_WIDGET') !== 'off';
+async function sendWidget(chatId: string, s: Subscriber, date: string): Promise<void> {
+  if (!widgetsOk) return;
+  try {
+    const w = widgetData(locOf(s), date);
+    const r = await tg('sendWidget', { chat_id: chatId, html: WIDGET_HTML, height: 400, chat_data: JSON.stringify(w), caption: widgetCaption(w) });
+    if (!r.ok) {
+      console.error('sendWidget:', r.error_code, r.description);
+      if (r.error_code !== 429) widgetsOk = false;
+    }
+  } catch (e) {
+    console.error('Виджет: ошибка', (e as Error).message);
+  }
+}
+
 async function sendMorning(chatId: string, s: Subscriber, now: Date, greet = true): Promise<TgResp<unknown>> {
   const { date } = localTime(s.sub, now);
+  await sendWidget(chatId, s, date);
   const birthUtc = s.sub.hd && s.sub.birthUtc ? new Date(s.sub.birthUtc) : null;
   let hd: ReturnType<typeof hdMorning> | null = null;
   try {
@@ -204,7 +228,7 @@ try {
 }
 const before = JSON.stringify(state);
 const now = new Date();
-const stats = { updates: 0, subscribed: 0, unsubscribed: 0, sent: 0, failed: 0, removed: 0 };
+const stats = { updates: 0, subscribed: 0, unsubscribed: 0, sent: 0, changes: 0, alerts: 0, failed: 0, removed: 0 };
 
 // Перенос владельца со старой схемы (один раз).
 const ownerChat = env('TELEGRAM_CHAT_ID');
@@ -260,6 +284,27 @@ for (const u of upd.result ?? []) {
     const s = state.subs[a.chatId];
     if (s) await sendMorning(a.chatId, s, now, false);
     else await tg('sendMessage', { chat_id: a.chatId, text: 'Чтобы я присылал подсказку для твоего места, открой приложение и включи «Утреннее сообщение» в разделе «Ещё».', reply_markup: openButton() });
+  } else if (a.kind === 'remind') {
+    const [, m, d] = a.date.split('-').map(Number) as [number, number, number];
+    const title = AREAS.find((x) => x.key === a.area)?.title ?? '';
+    const when = `${d} ${['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'][m - 1]}`;
+    await tg('sendMessage', {
+      chat_id: a.chatId,
+      text: a.subscribed
+        ? `📅 Хорошо! Накануне, вечером в 20:00, напомню, что ${when} — день для «${title}», и подскажу лучшее время.`
+        : 'Чтобы я мог напомнить, сначала включи «Утреннее сообщение» в приложении («Ещё» → «Утреннее сообщение»): так я узнаю твоё место и часовой пояс. Потом нажми «Напомнить» ещё раз.',
+      reply_markup: openButton(),
+    });
+    // Выбранный день — уже завтра, а 20:00 прошло: присылаем подсказку сразу.
+    const s = state.subs[a.chatId];
+    const lt = s ? localTime(s.sub, now) : null;
+    if (s && lt && A.addDays(lt.date, 1) === a.date && lt.minutes >= REMIND_AT) {
+      const r = s.reminders?.find((x) => x.date === a.date && x.area === a.area);
+      if (r) {
+        await tg('sendMessage', { chat_id: a.chatId, text: reminderText(s, r as never), parse_mode: 'HTML', reply_markup: openButton('Открыть подробно') });
+        s.reminders = s.reminders!.filter((x) => x !== r);
+      }
+    }
   } else if (a.kind === 'voices') {
     await sendVoices(a.chatId);
   } else if (a.kind === 'bad-code') {
@@ -291,5 +336,72 @@ for (const [chatId, s] of Object.entries(state.subs)) {
   }
 }
 
+// 3) Смена лунного дня.
+for (const [chatId, s] of Object.entries(state.subs)) {
+  let day: ReturnType<typeof changeDue> = null;
+  try {
+    day = changeDue(s, now);
+  } catch (e) {
+    console.error('Смена дня: ошибка расчёта', (e as Error).message);
+  }
+  if (!day) continue;
+  try {
+    if (s.sub.voice) {
+      try {
+        const audio = await synth(changeSpeech(day, s.sub.timeZone), s.sub.voice as Exclude<VoiceId, 0>);
+        if (audio) await tgFile('sendVoice', { chat_id: chatId, caption: '🎧 Энергия сменилась' }, { field: 'voice', data: audio, name: 'smena.mp3', type: 'audio/mpeg' });
+      } catch (e) {
+        console.error('Голос смены дня: ошибка', (e as Error).message);
+      }
+    }
+    const r = await send(chatId, changeText(day, s.sub.timeZone));
+    if (r.ok) {
+      s.lastChange = day.start.toISOString();
+      stats.changes++;
+    } else if (r.error_code === 403 || r.error_code === 400) {
+      delete state.subs[chatId];
+      stats.removed++;
+    } else stats.failed++;
+  } catch {
+    stats.failed++;
+  }
+}
+
+// 4) Луна без курса, вечерний вопрос, Солнце в новых воротах, напоминания (D-146).
+const diaryButton = { inline_keyboard: [[{ text: '✍️ Записать в дневник', web_app: { url: `${appUrl}${appUrl.includes('?') ? '&' : '?'}open=entry` } }]] };
+async function alert(chatId: string, text: string, markup: object | null = openButton('Открыть подробно')): Promise<boolean> {
+  const r = await tg('sendMessage', { chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true, ...(markup ? { reply_markup: markup } : {}) });
+  if (r.ok) stats.alerts++;
+  else stats.failed++;
+  return !!r.ok;
+}
+for (const [chatId, s] of Object.entries(state.subs)) {
+  try {
+    const p = vocDue(s, now);
+    if (p && (await alert(chatId, vocText(p, now, s.sub.timeZone), null))) s.lastVoc = p.start.toISOString();
+  } catch (e) {
+    console.error('Луна без курса: ошибка', (e as Error).message);
+  }
+  try {
+    if (eveningDue(s, now) && (await alert(chatId, eveningText(s, now), diaryButton))) s.lastEvening = localTime(s.sub, now).date;
+  } catch (e) {
+    console.error('Вечер: ошибка', (e as Error).message);
+  }
+  try {
+    const g = sunGateDue(s, now);
+    if (g?.silent) s.lastSunGate = g.gate;
+    else if (g && (await alert(chatId, sunGateText(s, g.gate, now)))) s.lastSunGate = g.gate;
+  } catch (e) {
+    console.error('Солнце в воротах: ошибка', (e as Error).message);
+  }
+  try {
+    for (const r of remindersDue(s, now)) {
+      if (await alert(chatId, reminderText(s, r))) s.reminders = (s.reminders ?? []).filter((x) => x !== r);
+    }
+  } catch (e) {
+    console.error('Напоминание: ошибка', (e as Error).message);
+  }
+}
+
 if (JSON.stringify(state) !== before) save(state);
-console.log(`Подписчиков: ${Object.keys(state.subs).length}. Сообщений боту: ${stats.updates}, подписались/обновили: ${stats.subscribed}, отписались: ${stats.unsubscribed}. Отправлено утренних: ${stats.sent}, ошибок: ${stats.failed}, удалено недоступных: ${stats.removed}.`);
+console.log(`Подписчиков: ${Object.keys(state.subs).length}. Сообщений боту: ${stats.updates}, подписались/обновили: ${stats.subscribed}, отписались: ${stats.unsubscribed}. Отправлено утренних: ${stats.sent}, о смене дня: ${stats.changes}, прочих уведомлений: ${stats.alerts}, ошибок: ${stats.failed}, удалено недоступных: ${stats.removed}.`);

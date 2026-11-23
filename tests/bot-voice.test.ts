@@ -16,7 +16,7 @@ describe('код подписки с голосом и Дизайном чело
     for (const voice of [0, 1, 2, 3] as const) {
       const s = { ...base, voice, hd: true, birthUtc: RA.getTime() };
       const code = encodeSubscription(s);
-      expect(code[0]).toBe('c');
+      expect(code[0]).toBe('d');
       expect(code.length).toBeLessThanOrEqual(MAX_START);
       expect(decodeSubscription(code)).toEqual(s);
     }

@@ -41,7 +41,7 @@ export interface Settings {
    * Утреннее сообщение от бота. code — последний отправленный боту код подписки.
    * voice — голосовое сообщение (0 нет, 1 Светлана, 2 Дария, 3 Алёна), hd — транзиты Дизайна человека с бодиграфом (D-137).
    */
-  morning: { enabled: boolean; hour: number; minute: number; code: string | null; voice: 0 | 1 | 2 | 3; hd: boolean };
+  morning: { enabled: boolean; hour: number; minute: number; code: string | null; voice: 0 | 1 | 2 | 3; hd: boolean; changes: boolean; voc: boolean; sunGate: boolean; evening: number | null };
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -66,7 +66,7 @@ export const DEFAULT_SETTINGS: Settings = {
   cloudProfile: true,
   autoBackup: true,
   pair: null,
-  morning: { enabled: false, hour: 7, minute: 30, code: null, voice: 0, hd: true },
+  morning: { enabled: false, hour: 7, minute: 30, code: null, voice: 0, hd: true, changes: true, voc: true, sunGate: true, evening: 21 * 60 },
 };
 
 /** Аккуратно дополняет сохранённые настройки новыми полями по умолчанию. */

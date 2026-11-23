@@ -109,6 +109,16 @@ export function App() {
   useEffect(() => {
     if (ready && settings.onboarded) void restoreDiaryIfEmpty();
   }, [ready, settings.onboarded]);
+  // Открыли из бота кнопкой «Записать в дневник» (…?open=entry, D-146).
+  useEffect(() => {
+    if (!ready || !settings.onboarded) return;
+    const p = new URLSearchParams(window.location.search);
+    if (p.get('open') === 'entry') {
+      setStack([{ name: 'entry', date: today }]);
+      window.history.replaceState(null, '', window.location.pathname + window.location.hash);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, settings.onboarded]);
   useEffect(() => {
     scroller.current?.scrollTo({ top: 0 });
   }, [tab, stack]);

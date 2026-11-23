@@ -3,6 +3,7 @@
  */
 import { toDateKey, wallClock, type DateKey } from '../astro/time';
 import { decodeSubscription, type Subscription } from './payload';
+import { decodeReminder } from './reminder';
 
 export interface Subscriber {
   sub: Subscription;
@@ -10,6 +11,16 @@ export interface Subscriber {
   /** Подпись места в заголовке (только у владельца из настроек репозитория). */
   placeName?: string;
   lastSent: DateKey | null;
+  /** Начало лунного дня, о смене на который уже сообщили (ISO). */
+  lastChange?: string;
+  /** Начало Луны без курса, о которой уже предупредили (ISO). */
+  lastVoc?: string;
+  /** Дата последнего вечернего вопроса. */
+  lastEvening?: DateKey;
+  /** Ворота Солнца, о которых уже сообщили. */
+  lastSunGate?: number;
+  /** Напоминания о днях, выбранных в «Подобрать день». */
+  reminders?: { date: DateKey; area: string }[];
   since: string;
 }
 
@@ -34,6 +45,7 @@ export type Action =
   | { kind: 'welcome'; chatId: string; firstName: string }
   | { kind: 'bad-code'; chatId: string }
   | { kind: 'voices'; chatId: string }
+  | { kind: 'remind'; chatId: string; date: DateKey; area: string; subscribed: boolean }
   | { kind: 'ignore' };
 
 interface TgUpdate {
@@ -66,11 +78,21 @@ export function applyUpdate(state: BotState, u: TgUpdate, now: Date): Action {
     return { kind: 'unsubscribed', chatId, wasSubscribed: was };
   }
   if (command === '/golos' || command === '/voices' || (command === '/start' && arg === 'golos')) return { kind: 'voices', chatId };
-  if (command === '/start' && /^[ac]/.test(arg)) {
+  if (command === '/start' && /^r/.test(arg)) {
+    const r = decodeReminder(arg);
+    if (!r) return { kind: 'bad-code', chatId };
+    const s = state.subs[chatId];
+    if (s) {
+      const list = (s.reminders ?? []).filter((x) => !(x.date === r.date && x.area === r.area));
+      s.reminders = [...list, r].sort((a, b) => a.date.localeCompare(b.date)).slice(-20);
+    }
+    return { kind: 'remind', chatId, date: r.date, area: r.area, subscribed: !!s };
+  }
+  if (command === '/start' && /^[acd]/.test(arg)) {
     const sub = decodeSubscription(arg);
     if (!sub) return { kind: 'bad-code', chatId };
     const prev = state.subs[chatId];
-    state.subs[chatId] = { sub, firstName, lastSent: prev?.lastSent ?? null, since: prev?.since ?? now.toISOString() };
+    state.subs[chatId] = { ...prev, sub, firstName, lastSent: prev?.lastSent ?? null, since: prev?.since ?? now.toISOString() };
     return { kind: 'subscribed', chatId, isNew: !prev };
   }
   if (command === '/today') return { kind: 'today', chatId, subscribed: chatId in state.subs };
