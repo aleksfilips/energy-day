@@ -60,7 +60,7 @@ export function TodayScreen({ nav, openUpcoming }: { nav: Nav; openUpcoming: () 
       />
       <NowDayCard current={current} dominant={model.dominant.number} dayStart={model.bounds.start} now={now} content={content} timeZone={location.timeZone} />
       <TimeStrip model={model} now={now} />
-      <HdSpotlight date={today} />
+      <HdSpotlight date={today} onOpenChart={() => nav.push({ name: 'hd' })} />
       <AreaGrid areas={extra.verdicts} lunarDay={model.dominant.number} onPick={(area) => nav.push({ name: 'pick', area })} />
       <WeekAhead nav={nav} onPick={() => nav.push({ name: 'pick' })} />
       <MoreTiles

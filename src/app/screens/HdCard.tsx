@@ -443,7 +443,7 @@ function spotlightLines(story: HdStory): string[] {
 }
 
 /** Заметная карточка «Твой дизайн сегодня» на главном экране. */
-export function HdSpotlight({ date }: { date: DateKey }) {
+export function HdSpotlight({ date, onOpenChart }: { date: DateKey; onOpenChart?: () => void }) {
   const { settings } = useStore();
   const story = useHdStory(date);
   const [open, setOpen] = useState(false);
@@ -483,6 +483,17 @@ export function HdSpotlight({ date }: { date: DateKey }) {
       </NightCard>
       <Sheet open={open} onClose={() => setOpen(false)}>
         <HdStoryView story={story} date={date} />
+        {onOpenChart && (
+          <button
+            onClick={() => {
+              setOpen(false);
+              onOpenChart();
+            }}
+            className="mt-4 h-[52px] w-full rounded-full bg-accent text-[16px] font-semibold text-bg active:scale-[0.98]"
+          >
+            Вся карта: мандала, циклы, мои люди
+          </button>
+        )}
       </Sheet>
     </>
   );

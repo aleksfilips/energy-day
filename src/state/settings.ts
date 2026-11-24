@@ -7,6 +7,14 @@ import type { BirthData } from '../humandesign/chart';
 
 export type Theme = 'dark' | 'light' | 'telegram';
 
+export interface HdPerson {
+  id: string;
+  name: string;
+  birth: BirthData;
+  note: string;
+  tags: string[];
+}
+
 export interface Settings {
   version: 1;
   onboarded: boolean;
@@ -37,6 +45,8 @@ export interface Settings {
   autoBackup: boolean;
   /** Второй человек для совместимости по Дизайну человека (D-143). Только на этом устройстве. */
   pair: { name: string; birth: BirthData } | null;
+  /** «Мои люди» (D-148): карты близких. Только на этом устройстве, в облако не уходит. */
+  people: HdPerson[];
   /**
    * Утреннее сообщение от бота. code — последний отправленный боту код подписки.
    * voice — голосовое сообщение (0 нет, 1 Светлана, 2 Дария, 3 Алёна), hd — транзиты Дизайна человека с бодиграфом (D-137).
@@ -66,6 +76,7 @@ export const DEFAULT_SETTINGS: Settings = {
   cloudProfile: true,
   autoBackup: true,
   pair: null,
+  people: [],
   morning: { enabled: false, hour: 7, minute: 30, code: null, voice: 0, hd: true, changes: true, voc: true, sunGate: true, evening: 21 * 60 },
 };
 
@@ -80,5 +91,6 @@ export function migrateSettings(raw: Partial<Settings> | undefined): Settings {
     numerology: { ...DEFAULT_SETTINGS.numerology, ...raw.numerology },
     morning: { ...DEFAULT_SETTINGS.morning, ...raw.morning },
     locations: raw.locations ?? structuredClone(DEFAULT_SETTINGS.locations),
+    people: Array.isArray(raw.people) ? raw.people : [],
   };
 }

@@ -235,6 +235,7 @@ export function SettingsScreen({ nav }: { nav: Nav }) {
         {[
           ['profile', 'Мои данные', [settings.name, settings.birthday ? `${settings.birthday.day}.${String(settings.birthday.month).padStart(2, '0')}` : 'дата рождения не указана'].filter(Boolean).join(' · ')],
           ['locations', 'Место', location?.name ?? 'не выбрано'],
+          ['hd', 'Дизайн человека', settings.humanDesign ? 'моя карта, мандала, циклы жизни, мои люди' : 'укажи время и место рождения в «Моих данных»'],
           ['pair', 'Совместимость', settings.pair ? `ты и ${settings.pair.name} · Дизайн человека` : 'сравнить две карты Дизайна человека'],
           ['help', 'Справка', 'что значит каждый блок и как всё считается'],
         ].map(([name, title, sub]) => (

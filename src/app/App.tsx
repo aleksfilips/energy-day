@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { DateKey } from '../astro/time';
 import { haptic, useTelegramBack } from '../telegram';
 import { parseKey } from './format';
@@ -18,6 +18,12 @@ import { ProfileScreen } from './screens/Profile';
 import { ReviewScreen } from './screens/Review';
 import { LocationsScreen, SettingsScreen } from './screens/Settings';
 import { TodayScreen } from './screens/Today';
+import type { HdTab } from './screens/hd/common';
+
+// Раздел «Дизайн человека» (D-148) — отдельным файлом: в нём таблица Хирона и мандала.
+const HdScreen = lazy(() => import('./screens/hd/HdScreen'));
+const HdTimeScreen = lazy(() => import('./screens/hd/HdScreen').then((m) => ({ default: m.TimeScreen })));
+const HdPersonScreen = lazy(() => import('./screens/hd/HdScreen').then((m) => ({ default: m.PersonScreen })));
 import { UpcomingScreen } from './screens/Upcoming';
 
 export type Tab = 'today' | 'calendar' | 'upcoming' | 'diary' | 'more';
@@ -29,7 +35,10 @@ export type Route =
   | { name: 'review' }
   | { name: 'help' }
   | { name: 'pick'; area?: AreaKey }
-  | { name: 'pair' };
+  | { name: 'pair' }
+  | { name: 'hd'; tab?: HdTab }
+  | { name: 'hdTime' }
+  | { name: 'person'; id: string };
 
 export interface Nav {
   push: (r: Route) => void;
@@ -144,6 +153,12 @@ export function App() {
         <ReviewScreen nav={nav} />
       ) : top.name === 'pair' ? (
         <PairScreen nav={nav} />
+      ) : top.name === 'hd' ? (
+        <HdScreen nav={nav} tab={top.tab} />
+      ) : top.name === 'hdTime' ? (
+        <HdTimeScreen nav={nav} />
+      ) : top.name === 'person' ? (
+        <HdPersonScreen key={top.id} id={top.id} nav={nav} />
       ) : top.name === 'pick' ? (
         <PickScreen nav={nav} initial={top.area} />
       ) : (
@@ -174,7 +189,7 @@ export function App() {
             </button>
           )}
           <div key={top ? `${stack.length}-${top.name}` : tab} className={top ? 'push-in' : 'fade-in'}>
-            {screen}
+            <Suspense fallback={<div className="pt-24 text-center text-[14px] text-faint">Открываю…</div>}>{screen}</Suspense>
           </div>
         </div>
       </div>

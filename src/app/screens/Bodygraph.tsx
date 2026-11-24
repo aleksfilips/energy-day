@@ -30,6 +30,14 @@ export const NIGHT = {
 
 export type GraphTone = 'light' | 'night';
 
+/** Кружок ворот: заливка, обводка (если ворота и в Личности, и в Дизайне), цвет цифры, мерцание (транзит). */
+export interface GateMark {
+  fill: string;
+  ring?: string;
+  text?: string;
+  twinkle?: boolean;
+}
+
 export interface GraphPalette {
   silhouette: string;
   tube: string;
@@ -133,6 +141,11 @@ export function BodygraphSvg({
   tone = 'night',
   silhouette = 'm',
   className,
+  marks,
+  pulse,
+  viewBox,
+  hideNumbers = false,
+  onGate,
 }: {
   g: GraphView;
   layer: GraphLayer;
@@ -140,6 +153,14 @@ export function BodygraphSvg({
   tone?: GraphTone;
   silhouette?: 'm' | 'f';
   className?: string;
+  /** Кружки ворот своими цветами (например, цветом планеты) — D-148. */
+  marks?: ReadonlyMap<number, GateMark>;
+  /** Ворота, которые мягко пульсируют. */
+  pulse?: number | null;
+  /** Своя видимая область (например, только голова). */
+  viewBox?: readonly [number, number, number, number];
+  hideNumbers?: boolean;
+  onGate?: (gate: number) => void;
 }) {
   const uid = useId().replace(/:/g, '');
   const id = (s: string) => `${s}-${uid}`;
@@ -187,7 +208,7 @@ export function BodygraphSvg({
   const gates = Array.from({ length: 64 }, (_, i) => i + 1);
 
   return (
-    <svg viewBox={`${VIEWBOX.x} ${VIEWBOX.y} ${VIEWBOX.w} ${VIEWBOX.h}`} className={className} role="img" aria-label="Бодиграф">
+    <svg viewBox={viewBox ? viewBox.join(' ') : `${VIEWBOX.x} ${VIEWBOX.y} ${VIEWBOX.w} ${VIEWBOX.h}`} className={className} role="img" aria-label="Бодиграф">
       <defs>
         <filter id={id('glow')} x="-40%" y="-40%" width="180%" height="180%">
           <feGaussianBlur stdDeviation={mini ? 9 : 11} result="b" />
@@ -236,7 +257,38 @@ export function BodygraphSvg({
       })}
 
       {/* Ворота */}
-      {!mini && (
+      {!mini && !hideNumbers && marks && (
+        <g fontFamily="Inter, 'SF Pro Text', -apple-system, Roboto, sans-serif" textAnchor="middle">
+          {gates.map((n) => {
+            const { label, text } = GATES[n]!;
+            const m = marks.get(n);
+            if (!m)
+              return (
+                <text key={n} x={text[0]} y={text[1]} fontSize={23} fontWeight={500} fill={natalCenters.has(GATE_CENTER[n]!) ? '#6a4a1c' : trCenters.has(GATE_CENTER[n]!) ? '#14245a' : C.num}>
+                  {n}
+                </text>
+              );
+            return (
+              <g key={n} transform={`translate(${label[0]} ${label[1]})`} onClick={onGate ? () => onGate(n) : undefined} style={onGate ? { cursor: 'pointer' } : undefined}>
+                {m.ring && <circle r={27} fill="none" stroke={m.ring} strokeWidth={5} />}
+                <circle r={m.ring ? 22 : 24} fill={m.fill}>
+                  {m.twinkle && <animate attributeName="opacity" values="1;0.55;1" dur="2.4s" repeatCount="indefinite" />}
+                </circle>
+                <text y={8.4} fontSize={n > 9 ? 22 : 24} fontWeight={600} fill={m.text ?? (tone === 'night' ? '#141a2c' : '#fffdf8')}>
+                  {n}
+                </text>
+              </g>
+            );
+          })}
+        </g>
+      )}
+      {pulse != null && GATES[pulse] && (
+        <circle cx={GATES[pulse]!.label[0]} cy={GATES[pulse]!.label[1]} r={30} fill="none" stroke={C.personality} strokeWidth={5}>
+          <animate attributeName="r" values="28;40;28" dur="1.6s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="1;0.2;1" dur="1.6s" repeatCount="indefinite" />
+        </circle>
+      )}
+      {!mini && !hideNumbers && !marks && (
         <g fontFamily="Inter, 'SF Pro Text', -apple-system, Roboto, sans-serif" fontSize={23} textAnchor="middle">
           {gates.map((n) => {
             const { label, text } = GATES[n]!;
