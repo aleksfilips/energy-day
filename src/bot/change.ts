@@ -3,8 +3,8 @@
  * присылает короткое сообщение: на что сменилась энергия и главное о новом дне.
  * Чтобы не дублировать утро и не будить ночью, сообщаем только о смене:
  *  — в спокойное время по местному времени (с 07:00 до 22:00);
- *  — на лунный день, который НЕ описан в утреннем сообщении этих суток (утро описывает день,
- *    идущий большую часть 07:00–23:00, как и morningText).
+ *  — на лунный день, который НЕ описан в утреннем сообщении этих суток. Утро описывает день, который идёт
+ *    в момент отправки (D-149), поэтому молчим только о смене, случившейся до утреннего времени человека.
  */
 import * as A from '../astro';
 import { makeContent, type Content } from '../content';
@@ -30,12 +30,10 @@ export function changeDue(s: Subscriber, now: Date): A.LunarDay | null {
   if (s.lastChange === key) return null;
   const ago = now.getTime() - cur.start.getTime();
   if (ago < 0 || ago > CHANGE_CATCH_UP_MIN * 60000) return null;
-  const { date, minutes } = localTime(s.sub, cur.start);
+  const { minutes } = localTime(s.sub, cur.start);
   if (minutes < QUIET_TO || minutes >= QUIET_FROM) return null;
-  const [y, m, d] = date.split('-').map(Number) as [number, number, number];
-  const tz = s.sub.timeZone;
-  const dominant = A.dominantLunarDay(loc, A.zonedTimeToUtc(y, m, d, 7, 0, tz), A.zonedTimeToUtc(y, m, d, 23, 0, tz));
-  if (dominant.start.getTime() === cur.start.getTime()) return null;
+  // Смена до утреннего времени этих суток: утреннее сообщение уже рассказало (или расскажет) об этом дне.
+  if (minutes < s.sub.hour * 60 + s.sub.minute) return null;
   return cur;
 }
 

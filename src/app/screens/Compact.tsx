@@ -537,7 +537,7 @@ export function AreaGrid({ areas, lunarDay, onPick }: { areas: AreaVerdict[]; lu
             </div>
           ))}
           <p className="text-[15px] leading-6">Точка в углу плитки — на сегодня есть уточнение, например время, когда лучше не начинать. Нажми на любую плитку — там объяснение.</p>
-          <p className="text-[13px] leading-5 text-faint">Сегодня оценки даны по {lunarDay}-му лунному дню: он идёт большую часть светлого времени.</p>
+          <p className="text-[13px] leading-5 text-faint">Оценки даны по {lunarDay}-му лунному дню — тому, который идёт сейчас. Как только начнётся следующий лунный день, плитки сразу обновятся.</p>
         </div>
       </Sheet>
       <Sheet open={dreamsOpen} onClose={() => setDreamsOpen(false)} title="Сны этой ночи">
@@ -697,11 +697,17 @@ export function DayStorySheet({
   const ph = content.phase(model.phase.phase);
   const sg = content.sign(model.dominantSign);
   const t = (d: Date) => A.formatTime(d, tz);
-  const timing =
-    card.base.prev !== null && card.base.changesAt
-      ? `До ${t(card.base.changesAt)} ещё идёт ${card.base.prev}-й лунный день, потом начнётся ${plan.lunarDay}-й. Советы даны по ${plan.lunarDay}-му: он идёт большую часть светлого времени.`
-      : card.base.next !== null && card.base.changesAt
-        ? `В ${t(card.base.changesAt)} начнётся ${card.base.next}-й лунный день. Советы даны по ${plan.lunarDay}-му: он идёт большую часть светлого времени.`
+  const live = model.focus === 'now';
+  const timing = !card.base.changesAt
+    ? null
+    : card.base.next !== null
+      ? live
+        ? `Сейчас идёт ${plan.lunarDay}-й лунный день. В ${t(card.base.changesAt)} начнётся ${card.base.next}-й — и всё здесь сразу сменится на него.`
+        : `В ${t(card.base.changesAt)} начнётся ${card.base.next}-й лунный день. Советы даны по ${plan.lunarDay}-му: он идёт большую часть светлого времени.`
+      : card.base.prev !== null
+        ? live
+          ? `${plan.lunarDay}-й лунный день начался в ${t(card.base.changesAt)}, до этого шёл ${card.base.prev}-й. Всё здесь — уже про ${plan.lunarDay}-й.`
+          : `До ${t(card.base.changesAt)} ещё идёт ${card.base.prev}-й лунный день, потом начнётся ${plan.lunarDay}-й. Советы даны по ${plan.lunarDay}-му: он идёт большую часть светлого времени.`
         : null;
   return (
     <Sheet open={open} onClose={onClose}>
@@ -768,45 +774,3 @@ export function DayStorySheet({
   );
 }
 
-/**
- * «Сейчас уже другой лунный день» (D-145): советы дня даны по лунному дню, который идёт большую часть суток,
- * а когда лунный день сменился (или ещё не сменился) — отдельная карточка с энергией того дня, что идёт прямо сейчас.
- */
-export function NowDayCard({ current, dominant, dayStart, now, content, timeZone }: { current: A.LunarDay; dominant: number; dayStart: Date; now: Date; content: Content; timeZone: string }) {
-  if (current.number === dominant) return null;
-  const ld = content.lunarDay(current.number);
-  // Начался сегодня — значит, это следующий за основным; начался раньше — ещё идёт вчерашний.
-  const began = current.start >= dayStart;
-  const t = (d: Date) => A.formatTime(d, timeZone);
-  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-  return (
-    <Panel className="rise-in space-y-2.5 p-4">
-      <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-accent">
-        <span className="h-2 w-2 rounded-full" style={{ background: 'var(--accent)' }} />
-        {began ? `Энергия сменилась в ${t(current.start)}` : `Сейчас ещё до ${t(current.end)}`}
-      </div>
-      <div className="font-serif text-[24px] font-medium leading-tight">
-        {began ? 'Сейчас уже' : 'Сейчас ещё идёт'} {current.number}-й лунный день
-      </div>
-      <p className="text-[15px] leading-[1.45]">{plainText(ld.essence)}</p>
-      <div className="grid gap-1.5 text-[14.5px] leading-5">
-        {ld.favorable.slice(0, 3).map((x) => (
-          <div key={x} className="flex gap-2">
-            <span className="text-good">✓</span>
-            <span>{cap(x)}</span>
-          </div>
-        ))}
-        {ld.mindful.slice(0, 2).map((x) => (
-          <div key={x} className="flex gap-2">
-            <span className="text-care">!</span>
-            <span>{cap(x)}</span>
-          </div>
-        ))}
-      </div>
-      <p className="text-[13.5px] leading-5 text-muted">🌱 {ld.practice}</p>
-      <p className="text-[12px] leading-5 text-faint">
-        {began ? `Продлится до ${t(current.end)}${A.toDateKey(current.end, timeZone) !== A.toDateKey(now, timeZone) ? ' завтра' : ''}.` : `Потом начнётся ${dominant}-й.`} Остальные советы на странице — по {dominant}-му: он идёт большую часть суток.
-      </p>
-    </Panel>
-  );
-}

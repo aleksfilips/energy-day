@@ -14,6 +14,13 @@ export interface DayOptions {
   garden: boolean;
   birthday: Birthday | null;
   numerology: NumerologyOptions;
+  /**
+   * «Сейчас» (D-149). Если момент попадает в эти календарные сутки, всё, что зависит от лунного дня, знака и фазы,
+   * берётся по этому моменту: какой лунный день идёт сейчас, в каком знаке Луна сейчас. Так «Сегодня» показывает
+   * новые лунные сутки сразу, как только они начались. Без него (будущие и прошлые дни, календарь, «Подобрать день»)
+   * — по лунному дню, который идёт большую часть светлого окна.
+   */
+  at?: Date;
 }
 
 export interface DayModel {
@@ -24,13 +31,17 @@ export interface DayModel {
   /** Опорный момент дня — середина светлого окна. */
   ref: Date;
   lunarDays: A.LunarDaySegment[];
+  /** Лунный день, по которому даются советы: идущий сейчас (focus = 'now') или большую часть светлого окна. */
   dominant: A.LunarDay;
+  /** 'now' — модель собрана на момент `focusAt` (сегодня, вживую); 'majority' — по большей части светлого окна. */
+  focus: 'now' | 'majority';
+  focusAt: Date | null;
   cycleLength: number;
   phase: A.PhaseInfo;
   quarters: A.QuarterEvent[];
   sign: A.MoonSignInfo;
   ingresses: A.Ingress[];
-  /** Знак, в котором Луна большую часть светлого окна. */
+  /** Знак, в котором Луна сейчас (focus = 'now') или большую часть светлого окна. */
   dominantSign: A.Sign;
   voc: A.VocPeriod[];
   /** Доля светлого окна под Луной без курса, 0..1. */
@@ -63,12 +74,13 @@ export function computeDay(location: A.ResolvedLocation, date: A.DateKey, opts: 
   const ref = new Date((from.getTime() + to.getTime()) / 2);
 
   const lunarDays = A.lunarDaysForDate(location, date);
-  const dominant = A.dominantLunarDay(location, from, to);
+  const at = opts.at && opts.at >= bounds.start && opts.at < bounds.end ? opts.at : null;
+  const dominant = at ? A.lunarDayAt(location, at) : A.dominantLunarDay(location, from, to);
   const ingresses = A.ingressesBetween(bounds.start, bounds.end, opts.zodiac);
 
   // Знак, преобладающий в светлом окне.
-  let dominantSign = A.moonSign(from, opts.zodiac).sign;
-  {
+  let dominantSign = A.moonSign(at ?? from, opts.zodiac).sign;
+  if (!at) {
     const marks = [from, ...ingresses.map((i) => i.time).filter((t) => t > from && t < to), to];
     let best = -1;
     for (let i = 0; i + 1 < marks.length; i++) {
@@ -92,8 +104,10 @@ export function computeDay(location: A.ResolvedLocation, date: A.DateKey, opts: 
     ref,
     lunarDays,
     dominant,
+    focus: at ? 'now' : 'majority',
+    focusAt: at,
     cycleLength: dominant.totalInCycle,
-    phase: A.phaseInfo(ref),
+    phase: A.phaseInfo(at ?? ref),
     quarters: A.quartersBetween(bounds.start, bounds.end),
     sign: A.moonSign(ref, opts.zodiac),
     ingresses,

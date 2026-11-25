@@ -277,7 +277,7 @@ export function SettingsScreen({ nav }: { nav: Nav }) {
             <span className="w-8">до</span>
             <input type="range" min={18} max={24} value={settings.daylight.to} onChange={(e) => void update({ daylight: { ...settings.daylight, to: Number(e.target.value) } })} />
           </div>
-          <div className="text-[12px] text-faint">Советы на день даются по тому лунному дню, который идёт большую часть этого времени.</div>
+          <div className="text-[12px] text-faint">Сегодня советы всегда по лунному дню, который идёт прямо сейчас. Для других дней (календарь, «Подобрать день») — по тому, что идёт большую часть этого времени. Ещё по этим часам считается «Время дня».</div>
         </div>
       </Card>
 

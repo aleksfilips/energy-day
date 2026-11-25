@@ -122,7 +122,7 @@ export function dayMood(toneValue: number): DayMood {
 
 export interface DayPlan {
   mood: DayMood;
-  /** Лунный день, по которому составлен план (идёт большую часть светлого времени). */
+  /** Лунный день, по которому составлен план: сегодня — идущий сейчас, другие дни — большую часть светлого времени. */
   lunarDay: number;
   /** Одна-две простые фразы о дне. */
   headline: string;

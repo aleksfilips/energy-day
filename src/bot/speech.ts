@@ -54,9 +54,9 @@ function spans(ws: TimeWindow[], tz: string): string {
 }
 
 /** Абзацы голосового сообщения. hd — разбор Дизайна человека (если подключён). */
-export function morningSpeech({ loc, date, birthday, firstName }: MorningInput, hd?: HdStory): string[] {
+export function morningSpeech({ loc, date, birthday, firstName, at }: MorningInput, hd?: HdStory): string[] {
   const tz = loc.timeZone;
-  const day = computeDay(loc, date, { daylight: { from: 7, to: 23 }, vocMode: 'modern', zodiac: 'tropical', vedic: false, garden: false, birthday, numerology: DEFAULT_NUMEROLOGY });
+  const day = computeDay(loc, date, { daylight: { from: 7, to: 23 }, vocMode: 'modern', zodiac: 'tropical', vedic: false, garden: false, birthday, numerology: DEFAULT_NUMEROLOGY, at });
   const content = (contentCache ??= makeContent());
   const card = synthesize(day, content);
   const plan = dayPlan(day, card, content);
@@ -74,7 +74,11 @@ export function morningSpeech({ loc, date, birthday, firstName }: MorningInput, 
   out.push(`${firstName ? `Доброе утро, ${firstName}!` : 'Доброе утро!'} Сегодня ${wd}, ${ordinalN(d)} ${MONTHS[m - 1]}. Вот твой расклад на день.`);
 
   let lunar = `Идёт ${ordinalM(day.dominant.number)} лунный день.`;
-  if (card.base.prev !== null && card.base.changesAt) lunar = `${cap(ordinalM(day.dominant.number))} лунный день начинается в ${A.formatTime(card.base.changesAt, tz)}, а до этого продолжается ${ordinalM(card.base.prev)}.`;
+  if (card.base.prev !== null && card.base.changesAt)
+    lunar =
+      day.focus === 'now'
+        ? `${cap(ordinalM(day.dominant.number))} лунный день начался в ${A.formatTime(card.base.changesAt, tz)}, а до этого шёл ${ordinalM(card.base.prev)}.`
+        : `${cap(ordinalM(day.dominant.number))} лунный день начинается в ${A.formatTime(card.base.changesAt, tz)}, а до этого продолжается ${ordinalM(card.base.prev)}.`;
   else if (card.base.next !== null && card.base.changesAt) lunar += ` В ${A.formatTime(card.base.changesAt, tz)} начнётся ${ordinalM(card.base.next)}.`;
   out.push(`${lunar} ${dot(plainText(ld.essence))}`);
 

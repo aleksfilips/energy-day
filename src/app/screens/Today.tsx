@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import * as A from '../../astro';
 import { dayPlan, lifeAreas } from '../../synthesis/life';
 import { dayAreas } from '../../synthesis/areas';
 import { humanDate } from '../format';
@@ -7,14 +6,14 @@ import { useDay, useNow, useToday } from '../hooks';
 import { useStore } from '../store';
 import { Card } from '../ui';
 import { WhySheet } from './EnergyCard';
-import { AreaGrid, DayStorySheet, HeroCard, MoreTiles, NowDayCard, TimeStrip } from './Compact';
+import { AreaGrid, DayStorySheet, HeroCard, MoreTiles, TimeStrip } from './Compact';
 import { WeekAhead } from './Pick';
 import { ShareDay } from './ShareDay';
 import { HdSpotlight } from './HdCard';
 import type { Nav } from '../App';
 
 export function TodayScreen({ nav, openUpcoming }: { nav: Nav; openUpcoming: () => void }) {
-  const { location, content, settings } = useStore();
+  const { location, content } = useStore();
   const today = useToday();
   const now = useNow();
   const data = useDay(today);
@@ -24,8 +23,8 @@ export function TodayScreen({ nav, openUpcoming }: { nav: Nav; openUpcoming: () 
   if (!location || !data || !extra) return null;
   const { model, card } = data;
 
-  const current = A.lunarDayAt(location, now);
-  const signNow = A.moonSign(now, settings.zodiac).sign;
+  // Сегодня модель дня собрана «на сейчас» (D-149): model.dominant — лунный день, который идёт прямо сейчас.
+  const current = model.dominant;
   const endsToday = current.end < model.bounds.end;
   const wd = humanDate(today).split(', ')[1]!;
 
@@ -51,14 +50,13 @@ export function TodayScreen({ nav, openUpcoming }: { nav: Nav; openUpcoming: () 
         model={model}
         plan={extra.plan}
         number={current.number}
-        sign={signNow}
+        sign={model.dominantSign}
         until={endsToday ? current.end : null}
         next={endsToday ? (current.number + 1 > current.totalInCycle ? 1 : current.number + 1) : null}
         now={now}
         onWhy={() => setWhy(true)}
         onMore={() => setMore(true)}
       />
-      <NowDayCard current={current} dominant={model.dominant.number} dayStart={model.bounds.start} now={now} content={content} timeZone={location.timeZone} />
       <TimeStrip model={model} now={now} />
       <HdSpotlight date={today} onOpenChart={() => nav.push({ name: 'hd' })} />
       <AreaGrid areas={extra.verdicts} lunarDay={model.dominant.number} onPick={(area) => nav.push({ name: 'pick', area })} />

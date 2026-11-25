@@ -29,9 +29,11 @@ export interface MorningInput {
   birthday: { day: number; month: number } | null;
   /** Обращение по имени (из Telegram). */
   firstName?: string;
+  /** Момент отправки: советы — по лунному дню, который идёт в этот момент (D-149). */
+  at?: Date;
 }
 
-export function morningText({ loc, placeName, date, birthday, firstName }: MorningInput): string {
+export function morningText({ loc, placeName, date, birthday, firstName, at }: MorningInput): string {
   const tz = loc.timeZone;
   const day = computeDay(loc, date, {
     daylight: { from: 7, to: 23 },
@@ -41,6 +43,7 @@ export function morningText({ loc, placeName, date, birthday, firstName }: Morni
     garden: false,
     birthday,
     numerology: DEFAULT_NUMEROLOGY,
+    at,
   });
   const content = (contentCache ??= makeContent());
   const card = synthesize(day, content);

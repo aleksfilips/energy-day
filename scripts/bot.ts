@@ -132,6 +132,7 @@ function textFor(s: Subscriber, now: Date, greet = true): string {
     date,
     birthday: s.sub.birthDay ? { day: s.sub.birthDay, month: s.sub.birthMonth } : null,
     firstName: greet ? s.firstName || undefined : undefined,
+    at: now,
   });
 }
 
@@ -148,10 +149,10 @@ function heading(date: string): string {
  */
 /** Живая карточка дня (виджет Telegram, D-147). Если Telegram её не принимает — до конца запуска больше не пробуем. */
 let widgetsOk = env('BOT_WIDGET') !== 'off';
-async function sendWidget(chatId: string, s: Subscriber, date: string): Promise<void> {
+async function sendWidget(chatId: string, s: Subscriber, date: string, now: Date): Promise<void> {
   if (!widgetsOk) return;
   try {
-    const w = widgetData(locOf(s), date);
+    const w = widgetData(locOf(s), date, now);
     const r = await tg('sendWidget', { chat_id: chatId, html: WIDGET_HTML, height: 400, chat_data: JSON.stringify(w), caption: widgetCaption(w) });
     if (!r.ok) {
       console.error('sendWidget:', r.error_code, r.description);
@@ -164,7 +165,7 @@ async function sendWidget(chatId: string, s: Subscriber, date: string): Promise<
 
 async function sendMorning(chatId: string, s: Subscriber, now: Date, greet = true): Promise<TgResp<unknown>> {
   const { date } = localTime(s.sub, now);
-  await sendWidget(chatId, s, date);
+  await sendWidget(chatId, s, date, now);
   const birthUtc = s.sub.hd && s.sub.birthUtc ? new Date(s.sub.birthUtc) : null;
   let hd: ReturnType<typeof hdMorning> | null = null;
   try {
@@ -175,7 +176,7 @@ async function sendMorning(chatId: string, s: Subscriber, now: Date, greet = tru
   if (s.sub.voice) {
     try {
       const paragraphs = morningSpeech(
-        { loc: locOf(s), date, birthday: s.sub.birthDay ? { day: s.sub.birthDay, month: s.sub.birthMonth } : null, firstName: greet ? s.firstName || undefined : undefined },
+        { loc: locOf(s), date, birthday: s.sub.birthDay ? { day: s.sub.birthDay, month: s.sub.birthMonth } : null, firstName: greet ? s.firstName || undefined : undefined, at: now },
         hd?.story,
       );
       const audio = await synth(paragraphs, s.sub.voice as Exclude<VoiceId, 0>);

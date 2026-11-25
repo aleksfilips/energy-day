@@ -52,9 +52,9 @@ const firstSentence = (x: string) => {
   return (i > 0 ? p.slice(0, i) : p.replace(/\.$/, '')).replace(/:.*/, '');
 };
 
-export function widgetData(loc: A.ResolvedLocation, date: A.DateKey): WidgetData {
+export function widgetData(loc: A.ResolvedLocation, date: A.DateKey, at?: Date): WidgetData {
   const tz = loc.timeZone;
-  const day = computeDay(loc, date, { daylight: { from: 7, to: 23 }, vocMode: 'modern', zodiac: 'tropical', vedic: false, garden: false, birthday: null, numerology: DEFAULT_NUMEROLOGY });
+  const day = computeDay(loc, date, { daylight: { from: 7, to: 23 }, vocMode: 'modern', zodiac: 'tropical', vedic: false, garden: false, birthday: null, numerology: DEFAULT_NUMEROLOGY, at });
   const c = content();
   const plan = dayPlan(day, synthesize(day, c), c);
   const [y, mo, dd] = date.split('-').map(Number) as [number, number, number];

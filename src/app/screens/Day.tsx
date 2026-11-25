@@ -49,10 +49,14 @@ export function DayScreen({ date, nav }: { date: DateKey; nav: Nav }) {
 
       <HeroCard model={model} plan={extra.plan} number={model.dominant.number} sign={model.dominantSign} until={card.base.next !== null ? card.base.changesAt : null} next={card.base.next} onWhy={() => setWhy(true)} />
       {card.base.prev !== null && card.base.changesAt && (
-        <p className="-mt-1 px-1 text-[13px] text-faint">До {t(card.base.changesAt)} ещё идёт {ord(card.base.prev)} лунный день.</p>
+        <p className="-mt-1 px-1 text-[13px] text-faint">
+          {model.focus === 'now'
+            ? `${ord(model.dominant.number)} лунный день начался в ${t(card.base.changesAt)}, до этого шёл ${ord(card.base.prev)}.`
+            : `До ${t(card.base.changesAt)} ещё идёт ${ord(card.base.prev)} лунный день.`}
+        </p>
       )}
       <TimeCard model={model} />
-      <AreasCard areas={extra.verdicts} lunarDay={model.dominant.number} prev={card.base.prev} changesAt={card.base.prev !== null ? card.base.changesAt : null} tz={location.timeZone} />
+      <AreasCard areas={extra.verdicts} lunarDay={model.dominant.number} prev={model.focus === 'now' ? null : card.base.prev} changesAt={model.focus === 'now' || card.base.prev === null ? null : card.base.changesAt} tz={location.timeZone} />
       <LifeCard areas={extra.areas} sign={model.dominantSign} />
       <PersonalCard model={model} content={content} />
       <HdCard date={date} />

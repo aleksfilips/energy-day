@@ -96,7 +96,7 @@ export function PlanCard({ plan, onWhy, personal }: { plan: DayPlan; onWhy?: () 
         )}
       </div>
       <p className="mt-3 text-[18px] leading-[1.5]">{plan.headline}</p>
-      <p className="mt-1.5 text-[13px] text-faint">Главное на день — по {plan.lunarDay}-му лунному дню: он идёт большую часть дня.</p>
+      <p className="mt-1.5 text-[13px] text-faint">Главное на день — по {plan.lunarDay}-му лунному дню.</p>
       <div className="mt-5 grid gap-4">
         <div>
           <div className="mb-2 text-[14px] font-medium text-good">Хорошо сегодня</div>

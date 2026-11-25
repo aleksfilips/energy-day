@@ -101,7 +101,9 @@ export function synthesize(day: DayModel, content: Content): EnergyCard {
   const why: Explanation[] = [];
 
   // 1. Основа
-  const inWindow = day.lunarDays.filter((s) => s.to > day.window.from && s.from < day.window.to);
+  // Вживую (focus = 'now') соседи — по всем суткам календарного дня: «до 16:05 был 16-й», «в 17:09 начнётся 18-й».
+  const live = day.focus === 'now';
+  const inWindow = live ? day.lunarDays : day.lunarDays.filter((s) => s.to > day.window.from && s.from < day.window.to);
   const di = inWindow.findIndex((s) => s.day.number === day.dominant.number && s.day.start.getTime() === day.dominant.start.getTime());
   const before = di > 0 ? inWindow[di - 1]! : null;
   const after = di >= 0 && di + 1 < inWindow.length ? inWindow[di + 1]! : null;
@@ -118,7 +120,7 @@ export function synthesize(day: DayModel, content: Content): EnergyCard {
   why.push({
     step: 'Основа',
     input: A.describeLunarDays(day.lunarDays, tz),
-    effect: `Большую часть светлого времени идут ${base.day}-е сутки: тон «${base.tone}», выраженность ${base.intensity} из 3.`,
+    effect: `${live ? 'Сейчас идут' : 'Большую часть светлого времени идут'} ${base.day}-е сутки: тон «${base.tone}», выраженность ${base.intensity} из 3.`,
   });
 
   // 2. Фон
@@ -211,7 +213,9 @@ export function synthesize(day: DayModel, content: Content): EnergyCard {
   } else if (base.next !== null && base.changesAt) {
     s3 = `В ${t(base.changesAt)} начнутся ${base.next}-е сутки, и настрой сменится.`;
   } else if (base.prev !== null && base.changesAt) {
-    s3 = `До ${t(base.changesAt)} ещё идут ${base.prev}-е сутки, основная часть дня — ${base.day}-е.`;
+    s3 = live
+      ? `С ${t(base.changesAt)} идут ${base.day}-е сутки, до этого шли ${base.prev}-е.`
+      : `До ${t(base.changesAt)} ещё идут ${base.prev}-е сутки, основная часть дня — ${base.day}-е.`;
   } else {
     s3 = `Хорошо: ${ld.favorable.slice(0, 2).join(', ')}.`;
   }
