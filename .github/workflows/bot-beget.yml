@@ -3,7 +3,8 @@ name: Бот на Бегет
 # Сам доставляет новую версию бота на Бегет (папка ~/energy-bot), когда меняется код бота.
 # Заменяет только bot.mjs, zapusk.sh, fonts/, node_modules/ и versiya.txt.
 # НИКОГДА не трогает nastroyki.env (токен и фраза), data/ (подписчики), log.txt и node/ (свой Node.js).
-# Нужен секрет репозитория BEGET_SSH_KEY (закрытый SSH-ключ, созданный в терминале Бегета).
+# Нужен секрет репозитория BEGET_SSH_KEY: ОГРАНИЧЕННЫЙ ключ, созданный на Бегете файлом beget/ustanovit-klyuch.sh.
+# Он не даёт входа в аккаунт: только передачу архива приёмнику beget/priem.sh.
 on:
   push:
     branches: [main]
@@ -52,34 +53,22 @@ jobs:
           else
             mkdir -p ~/.ssh && chmod 700 ~/.ssh
             printf '%s\n' "$KEY" | tr -d '\r' > ~/.ssh/beget && chmod 600 ~/.ssh/beget
-            ssh-keyscan -T 20 "$BEGET_HOST" >> ~/.ssh/known_hosts 2>/dev/null
             echo "ok=yes" >> "$GITHUB_OUTPUT"
           fi
       - name: Отправить на Бегет
         if: steps.key.outputs.ok == 'yes'
+        # Ключ ограничен на стороне Бегета: он может только передать архив приёмнику
+        # ~/.energy-bot-priem/priem.sh (beget/priem.sh). Тот сам проверяет архив и кладёт файлы в ~/energy-bot.
         run: |
-          SSH="ssh -i $HOME/.ssh/beget -o BatchMode=yes -o ConnectTimeout=30 $BEGET_USER@$BEGET_HOST"
-          # 1) Новая версия — во временную папку рядом.
-          tar -czf - -C dist-bot/energy-bot . | $SSH 'rm -rf ~/.energy-bot-novoe && mkdir -p ~/.energy-bot-novoe && tar -xzf - -C ~/.energy-bot-novoe'
-          # 2) Ждём, пока бот не работает (его «замок»), и подменяем файлы за секунду.
-          $SSH 'bash -s' <<'REMOTE'
-          set -e
-          B="$HOME/energy-bot"; N="$HOME/.energy-bot-novoe"
-          [ -f "$B/nastroyki.env" ] || { echo "ОШИБКА: в $B нет nastroyki.env — папка бота не та."; exit 1; }
-          for i in $(seq 1 180); do mkdir "$B/.zamok" 2>/dev/null && break; sleep 1; done
-          [ -d "$B/.zamok" ] || { echo "ОШИБКА: бот занят дольше 3 минут."; exit 1; }
-          trap 'rmdir "$B/.zamok" 2>/dev/null' EXIT
-          rm -rf "$B/fonts.old" "$B/node_modules.old"
-          [ -d "$B/fonts" ] && mv "$B/fonts" "$B/fonts.old"
-          [ -d "$B/node_modules" ] && mv "$B/node_modules" "$B/node_modules.old"
-          mv "$N/fonts" "$B/fonts"; mv "$N/node_modules" "$B/node_modules"
-          cp "$B/bot.mjs" "$B/bot.mjs.old" 2>/dev/null || true
-          mv -f "$N/bot.mjs" "$B/bot.mjs"; mv -f "$N/zapusk.sh" "$B/zapusk.sh"; mv -f "$N/versiya.txt" "$B/versiya.txt"
-          chmod +x "$B/zapusk.sh"
-          rm -rf "$N" "$B/fonts.old" "$B/node_modules.old"
-          echo "$(date '+%d.%m %H:%M') Обновился с GitHub: $(cat "$B/versiya.txt")" >> "$B/log.txt"
-          echo "Готово: бот обновлён до $(cat "$B/versiya.txt")"
-          REMOTE
+          for h in $BEGET_HOST kryton.beget.com; do
+            echo "Пробую $h"
+            ssh-keyscan -T 20 "$h" >> ~/.ssh/known_hosts 2>/dev/null || continue
+            if tar -czf - -C dist-bot/energy-bot . | ssh -i "$HOME/.ssh/beget" -o BatchMode=yes -o ConnectTimeout=30 -o IdentitiesOnly=yes "$BEGET_USER@$h"; then
+              exit 0
+            fi
+          done
+          echo "::error title=Бегет не принял обновление::Подробности — в строках выше."
+          exit 1
       - name: Убрать ключ
         if: always()
         run: rm -f ~/.ssh/beget
