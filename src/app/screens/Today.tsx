@@ -54,6 +54,7 @@ export function TodayScreen({ nav, openUpcoming }: { nav: Nav; openUpcoming: () 
         until={endsToday ? current.end : null}
         next={endsToday ? (current.number + 1 > current.totalInCycle ? 1 : current.number + 1) : null}
         now={now}
+        tone={card.tone}
         onWhy={() => setWhy(true)}
         onMore={() => setMore(true)}
       />

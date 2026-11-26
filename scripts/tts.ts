@@ -17,6 +17,8 @@ function ensureEdge(): boolean {
   if (edgeReady !== null) return edgeReady;
   const has = () => spawnSync('python3', ['-m', 'edge_tts', '--help'], { stdio: 'ignore' }).status === 0;
   if (!has()) spawnSync('python3', ['-m', 'pip', 'install', '--quiet', '--disable-pip-version-check', 'edge-tts'], { stdio: 'inherit', timeout: 120_000 });
+  // Хостинг без прав на общую папку Python (Бегет) — ставим в домашнюю папку.
+  if (!has()) spawnSync('python3', ['-m', 'pip', 'install', '--user', '--quiet', '--disable-pip-version-check', 'edge-tts'], { stdio: 'inherit', timeout: 120_000 });
   edgeReady = has();
   if (!edgeReady) console.error('edge-tts не установился — голосовые сообщения пропущены.');
   return edgeReady;
