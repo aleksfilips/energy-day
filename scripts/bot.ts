@@ -28,7 +28,8 @@ import { REMIND_AT, changeSpeech, eveningDue, eveningText, remindersDue, reminde
 import { AREAS } from '../src/synthesis/areas';
 import { WIDGET_HTML, widgetCaption, widgetData } from '../src/bot/widget';
 import * as A from '../src/astro';
-import { applyUpdate, emptyState, isDue, localTime, type Action, type BotState, type Subscriber } from '../src/bot/state';
+import { addEvent, applyUpdate, emptyState, ensurePeople, isDue, localTime, placeKey, type Action, type BotState, type Subscriber } from '../src/bot/state';
+import { ADMIN_TZ_DEFAULT, adminSetupText, newcomersText, panelCaption, panelList, panelStats, panelSvg, panelText, type Newcomer } from '../src/bot/admin';
 import { SITE_URL } from '../src/config';
 
 const env = (k: string) => process.env[k]?.trim() || undefined;
@@ -37,6 +38,10 @@ const DATA = argAt > 0 ? process.argv[argAt + 1]! : 'bot-data/subscribers.enc';
 const token = env('TELEGRAM_BOT_TOKEN');
 const key = env('BOT_DATA_KEY');
 const appUrl = env('APP_URL') ?? SITE_URL;
+// Панель владельца (D-151): номер чата владельца, его пояс, уведомления о новеньких (off — выключить).
+const adminId = env('ADMIN_ID')?.replace(/[^\d-]/g, '') || undefined;
+const adminTz = env('ADMIN_TZ') ?? ADMIN_TZ_DEFAULT;
+const adminNotify = env('ADMIN_NOTIFY') !== 'off';
 
 // Без секретов спокойно выходим (иначе GitHub будет слать письмо об ошибке каждые 10 минут).
 if (!token || !key || key.length < 16) {
@@ -217,6 +222,54 @@ async function sendVoices(chatId: string): Promise<void> {
   }
 }
 
+/** Название места по координатам (OpenStreetMap), один раз на место; при ошибке — null. */
+async function lookupPlace(lat: number, lon: number): Promise<string | null> {
+  const base = env('GEOCODE_URL') ?? 'https://nominatim.openstreetmap.org';
+  if (base === 'off') return null;
+  try {
+    const q = new URLSearchParams({ lat: String(lat), lon: String(lon), format: 'jsonv2', zoom: '14', 'accept-language': 'ru' });
+    const res = await fetch(`${base}/reverse?${q}`, { headers: { 'user-agent': 'EnergyDayBot/1.0 (telegram bot)' }, signal: AbortSignal.timeout(6000) });
+    if (!res.ok) return null;
+    const a = ((await res.json()) as { address?: Record<string, string> }).address ?? {};
+    const name = a.city || a.town || a.village || a.hamlet || a.suburb || a.municipality || a.county || a.state;
+    return name ? name.slice(0, 40) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Дописать названия мест подписчикам, у которых их ещё нет (не больше max за раз, не чаще раза в секунду).
+ * Не нашлось — запоминаем пустое, чтобы не спрашивать каждую минуту; retry — спросить такие ещё раз (по /admin).
+ */
+async function fillPlaces(max: number, retry = false): Promise<void> {
+  state.places ??= {};
+  let n = 0;
+  for (const s of Object.values(state.subs)) {
+    if (n >= max) break;
+    const k = placeKey(s.sub.latitude, s.sub.longitude);
+    if (state.places[k] || (!retry && k in state.places)) continue;
+    if (n) await new Promise((r) => setTimeout(r, 1100));
+    n++;
+    const name = await lookupPlace(s.sub.latitude, s.sub.longitude);
+    state.places[k] = name ?? '';
+  }
+}
+
+/** Панель владельца: картинка, сводка и (по /admin_vse) весь список. */
+async function sendPanel(chatId: string, full: boolean): Promise<void> {
+  await fillPlaces(10, true);
+  const p = panelStats(state, new Date(), adminTz);
+  try {
+    const r = await tgFile('sendPhoto', { chat_id: chatId, caption: panelCaption(p), parse_mode: 'HTML' }, { field: 'photo', data: png(panelSvg(p)), name: 'panel.png', type: 'image/png' });
+    if (!r.ok) console.error('Панель, картинка:', r.error_code, r.description);
+  } catch (e) {
+    console.error('Панель, картинка: ошибка', (e as Error).message);
+  }
+  if (full) for (const part of panelList(p)) await tg('sendMessage', { chat_id: chatId, text: part, parse_mode: 'HTML', disable_web_page_preview: true });
+  else await tg('sendMessage', { chat_id: chatId, text: panelText(p), parse_mode: 'HTML', disable_web_page_preview: true });
+}
+
 const hhmm = (s: Subscriber) => `${String(s.sub.hour).padStart(2, '0')}:${String(s.sub.minute).padStart(2, '0')}`;
 
 // ---------- работа ----------
@@ -227,7 +280,9 @@ try {
   console.error('Не удалось расшифровать список подписчиков: секрет BOT_DATA_KEY не совпадает с тем, которым он был зашифрован.');
   process.exit(1);
 }
+ensurePeople(state);
 const before = JSON.stringify(state);
+const newcomers: Newcomer[] = [];
 const now = new Date();
 const stats = { updates: 0, subscribed: 0, unsubscribed: 0, sent: 0, changes: 0, alerts: 0, failed: 0, removed: 0 };
 
@@ -263,13 +318,25 @@ if (!upd.ok) {
 for (const u of upd.result ?? []) {
   stats.updates++;
   let a: Action;
+  const fromId = u.message?.chat.type === 'private' ? String(u.message.chat.id) : null;
+  const wasKnown = fromId ? !!state.people?.[fromId] : true;
+  const evBefore = state.events?.length ?? 0;
   try {
-    a = applyUpdate(state, u, now);
+    a = applyUpdate(state, u, now, adminId);
   } catch {
     continue;
   }
-  if (a.kind === 'subscribed') {
+  if (fromId && !wasKnown && fromId !== adminId && state.people?.[fromId]) newcomers.push({ kind: 'start', id: fromId });
+  const evNew = (state.events ?? []).slice(evBefore);
+  for (const e of evNew) if (e.id !== adminId && (e.k === 'blocked' || e.k === 'unsub')) newcomers.push({ kind: e.k, id: e.id });
+  if (a.kind === 'admin') {
+    await sendPanel(a.chatId, a.full);
+  } else if (a.kind === 'admin-setup') {
+    console.log(`Команда /admin, а владелец не указан. Номер этого чата: ${a.chatId} — впиши ADMIN_ID=${a.chatId} в nastroyki.env.`);
+    await tg('sendMessage', { chat_id: a.chatId, text: adminSetupText(a.chatId), parse_mode: 'HTML' });
+  } else if (a.kind === 'subscribed') {
     stats.subscribed++;
+    if (a.isNew && a.chatId !== adminId) newcomers.push({ kind: 'sub', id: a.chatId });
     const s = state.subs[a.chatId]!;
     await send(a.chatId, `${a.isNew ? '✨ Готово' : '✨ Данные обновлены'}${s.firstName ? `, ${s.firstName.replace(/[<>&]/g, '')}` : ''}! Каждое утро в ${hhmm(s)} по твоему времени буду присылать подсказку на день.\n\nНе нужно — напиши /stop. Сегодняшняя подсказка — ниже.`, false);
     try {
@@ -330,6 +397,7 @@ for (const [chatId, s] of Object.entries(state.subs)) {
     } else if (r.error_code === 403 || r.error_code === 400) {
       // Человек заблокировал бота или удалил чат — больше не пишем.
       delete state.subs[chatId];
+      addEvent(state, 'gone', chatId, now);
       stats.removed++;
     } else stats.failed++;
   } catch {
@@ -361,6 +429,7 @@ for (const [chatId, s] of Object.entries(state.subs)) {
       stats.changes++;
     } else if (r.error_code === 403 || r.error_code === 400) {
       delete state.subs[chatId];
+      addEvent(state, 'gone', chatId, now);
       stats.removed++;
     } else stats.failed++;
   } catch {
@@ -401,6 +470,19 @@ for (const [chatId, s] of Object.entries(state.subs)) {
     }
   } catch (e) {
     console.error('Напоминание: ошибка', (e as Error).message);
+  }
+}
+
+// 5) Владельцу — кто пришёл и кто ушёл за этот запуск (D-151). Названия мест — по одному в минуту, понемногу.
+if (adminId) {
+  try {
+    await fillPlaces(newcomers.some((x) => x.kind === 'sub') ? 3 : 1);
+  } catch {
+    /* без названия места — покажем пояс */
+  }
+  if (adminNotify) {
+    const text = newcomersText(state, newcomers, now);
+    if (text) await tg('sendMessage', { chat_id: adminId, text, parse_mode: 'HTML', disable_web_page_preview: true });
   }
 }
 

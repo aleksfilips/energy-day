@@ -244,6 +244,12 @@ input[type='range']::-moz-range-thumb {
 }
 
 /* Герой «Сегодня»: ночное небо с мягким свечением и редкими звёздами. */
+/* Шкала «Насколько активный день» внутри героя: стеклянная вставка. */
+.activity {
+  background: linear-gradient(180deg, var(--night), transparent 140%);
+  backdrop-filter: blur(2px);
+}
+
 .hero {
   background:
     radial-gradient(1.2px 1.2px at 78% 22%, var(--star) 50%, transparent 51%),

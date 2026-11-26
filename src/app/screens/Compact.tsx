@@ -15,6 +15,7 @@ import { useStore } from '../store';
 import { LifeCard, ord, PersonalCard } from './DayParts';
 import { ABOUT, AREA_ABOUT, moodAbout, plainText, VERDICT_ABOUT } from '../../synthesis/explain';
 import type { EnergyCard } from '../../synthesis/rules';
+import { ActivityGauge } from './EnergyCard';
 import { About, GoodBad, SubTitle, Tip } from './Explain';
 
 export const SHORT: Record<AreaKey, string> = {
@@ -75,11 +76,14 @@ export function HeroCard({
   until,
   next,
   now,
+  tone,
   onWhy,
   onMore,
 }: {
   model: DayModel;
   plan: DayPlan;
+  /** Шкала «Насколько активный день» (из того же расчёта, что и в «Из чего сложился день»). */
+  tone: EnergyCard['tone'];
   number: number;
   sign: A.Sign;
   until: Date | null;
@@ -117,21 +121,32 @@ export function HeroCard({
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-3">
-        <span className="flex items-center gap-2 text-[15px] font-semibold" style={{ color: MOOD[plan.mood.kind] }}>
-          <span className="h-2 w-2 rounded-full" style={{ background: MOOD[plan.mood.kind] }} />
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          haptic.select();
+          onWhy();
+        }}
+        className="activity mt-4 block w-full rounded-[20px] border border-line px-4 pb-2.5 pt-3 text-left transition-transform active:scale-[0.985]"
+        aria-label={`${plan.mood.title}. Открыть, из чего сложился день`}
+      >
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="text-[10.5px] font-medium uppercase tracking-[0.16em] text-faint">Насколько активный день</span>
+          <span className="shrink-0 text-[12px] text-faint">из чего ›</span>
+        </div>
+        <div className="mt-1.5 flex items-center gap-2 whitespace-nowrap text-[17px] font-semibold" style={{ color: MOOD[plan.mood.kind] }}>
+          <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: MOOD[plan.mood.kind], boxShadow: `0 0 8px ${MOOD[plan.mood.kind]}` }} />
           {plan.mood.title}
-        </span>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            (onMore ?? onWhy)();
-          }}
-          className="rounded-full border border-line px-3 py-1 text-[13px] text-accent"
-        >
-          {onMore ? 'подробнее о дне ›' : 'почему так'}
-        </button>
-      </div>
+        </div>
+        <div className="mt-0.5 pl-4 text-[13.5px] leading-snug text-muted">{plan.mood.hint}</div>
+        <ActivityGauge value={tone.value} className="mt-3" />
+        <div className="mt-1.5 flex justify-between text-[11.5px] text-faint">
+          <span>тише</span>
+          <span>ровно</span>
+          <span>активнее</span>
+        </div>
+      </button>
       <p className="mt-1.5 text-[17px] leading-[1.45]">{plan.headline}</p>
       {number !== plan.lunarDay && (
         <p className="mt-1 text-[12.5px] leading-5 text-faint">Советы — по {plan.lunarDay}-му лунному дню: он идёт большую часть светлого времени.</p>
@@ -145,6 +160,17 @@ export function HeroCard({
           <span className="text-care">!</span>
           <span>{plan.avoidList[0]}</span>
         </div>
+      </div>
+      <div className="mt-4 flex justify-end">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            (onMore ?? onWhy)();
+          }}
+          className="rounded-full border border-line px-3 py-1 text-[13px] text-accent"
+        >
+          {onMore ? 'подробнее о дне ›' : 'почему так ›'}
+        </button>
       </div>
     </section>
   );

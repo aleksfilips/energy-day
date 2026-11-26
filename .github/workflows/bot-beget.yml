@@ -1,0 +1,85 @@
+name: Бот на Бегет
+
+# Сам доставляет новую версию бота на Бегет (папка ~/energy-bot), когда меняется код бота.
+# Заменяет только bot.mjs, zapusk.sh, fonts/, node_modules/ и versiya.txt.
+# НИКОГДА не трогает nastroyki.env (токен и фраза), data/ (подписчики), log.txt и node/ (свой Node.js).
+# Нужен секрет репозитория BEGET_SSH_KEY (закрытый SSH-ключ, созданный в терминале Бегета).
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/**'
+      - 'src/**'
+      - 'beget/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/bot-beget.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bot-beget
+  cancel-in-progress: false
+
+env:
+  BEGET_HOST: ${{ vars.BEGET_HOST || 'hochuofu.beget.tech' }}
+  BEGET_USER: ${{ vars.BEGET_USER || 'hochuofu' }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - name: Собрать бота
+        run: bash beget/sobrat.sh
+      - name: Проверить ключ
+        id: key
+        env:
+          KEY: ${{ secrets.BEGET_SSH_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::warning title=Нет ключа Бегета::Секрет BEGET_SSH_KEY не добавлен — бот собран и проверен, но на Бегет не отправлен."
+            echo "ok=no" >> "$GITHUB_OUTPUT"
+          else
+            mkdir -p ~/.ssh && chmod 700 ~/.ssh
+            printf '%s\n' "$KEY" | tr -d '\r' > ~/.ssh/beget && chmod 600 ~/.ssh/beget
+            ssh-keyscan -T 20 "$BEGET_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+            echo "ok=yes" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Отправить на Бегет
+        if: steps.key.outputs.ok == 'yes'
+        run: |
+          SSH="ssh -i $HOME/.ssh/beget -o BatchMode=yes -o ConnectTimeout=30 $BEGET_USER@$BEGET_HOST"
+          # 1) Новая версия — во временную папку рядом.
+          tar -czf - -C dist-bot/energy-bot . | $SSH 'rm -rf ~/.energy-bot-novoe && mkdir -p ~/.energy-bot-novoe && tar -xzf - -C ~/.energy-bot-novoe'
+          # 2) Ждём, пока бот не работает (его «замок»), и подменяем файлы за секунду.
+          $SSH 'bash -s' <<'REMOTE'
+          set -e
+          B="$HOME/energy-bot"; N="$HOME/.energy-bot-novoe"
+          [ -f "$B/nastroyki.env" ] || { echo "ОШИБКА: в $B нет nastroyki.env — папка бота не та."; exit 1; }
+          for i in $(seq 1 180); do mkdir "$B/.zamok" 2>/dev/null && break; sleep 1; done
+          [ -d "$B/.zamok" ] || { echo "ОШИБКА: бот занят дольше 3 минут."; exit 1; }
+          trap 'rmdir "$B/.zamok" 2>/dev/null' EXIT
+          rm -rf "$B/fonts.old" "$B/node_modules.old"
+          [ -d "$B/fonts" ] && mv "$B/fonts" "$B/fonts.old"
+          [ -d "$B/node_modules" ] && mv "$B/node_modules" "$B/node_modules.old"
+          mv "$N/fonts" "$B/fonts"; mv "$N/node_modules" "$B/node_modules"
+          cp "$B/bot.mjs" "$B/bot.mjs.old" 2>/dev/null || true
+          mv -f "$N/bot.mjs" "$B/bot.mjs"; mv -f "$N/zapusk.sh" "$B/zapusk.sh"; mv -f "$N/versiya.txt" "$B/versiya.txt"
+          chmod +x "$B/zapusk.sh"
+          rm -rf "$N" "$B/fonts.old" "$B/node_modules.old"
+          echo "$(date '+%d.%m %H:%M') Обновился с GitHub: $(cat "$B/versiya.txt")" >> "$B/log.txt"
+          echo "Готово: бот обновлён до $(cat "$B/versiya.txt")"
+          REMOTE
+      - name: Убрать ключ
+        if: always()
+        run: rm -f ~/.ssh/beget

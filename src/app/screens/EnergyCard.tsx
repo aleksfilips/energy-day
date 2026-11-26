@@ -4,18 +4,45 @@ import type { DayModel } from '../../synthesis/day';
 import { RULES_TEXT, type EnergyCard } from '../../synthesis/rules';
 import { Card, Chip, Label, Sheet } from '../ui';
 
+const TONE_STEPS = [-3, -2, -1, 0, 1, 2, 3] as const;
+
+/** Цвет деления шкалы: тише — лунно-синий, середина — серебро, активнее — золото. */
+function stepColor(v: number): string {
+  return v < 0 ? 'var(--tone-calm)' : v > 0 ? 'var(--accent)' : 'var(--silver)';
+}
+
+/**
+ * Шкала «Насколько активный день» (D-150): семь делений от −3 до +3.
+ * Середина — ровный день. Горят деления от середины до значения дня, последнее — со свечением.
+ */
+export function ActivityGauge({ value, className }: { value: number; className?: string }) {
+  return (
+    <div className={`flex items-center gap-[5px] ${className ?? ''}`} role="img" aria-label={`Насколько активный день: ${value > 0 ? '+' : ''}${value} из шкалы от −3 до +3`}>
+      {TONE_STEPS.map((v) => {
+        const lit = v === 0 || (value < 0 && v >= value && v < 0) || (value > 0 && v <= value && v > 0);
+        const tip = v === value;
+        const c = stepColor(v);
+        return (
+          <span
+            key={v}
+            className="relative flex-1 rounded-full transition-all duration-500"
+            style={{
+              height: tip ? 8 : 6,
+              background: c,
+              opacity: tip ? 1 : lit ? (v === 0 && value !== 0 ? 0.5 : 0.85) : 0.16,
+              boxShadow: tip ? `0 0 12px ${c}, 0 0 3px ${c}` : undefined,
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
 export function ToneScaleView({ value, label }: { value: number; label: string }) {
   return (
     <div>
-      <div className="flex items-center gap-1">
-        {[-3, -2, -1, 0, 1, 2, 3].map((v) => (
-          <span
-            key={v}
-            className="h-1.5 flex-1 rounded-full transition"
-            style={{ background: v === value ? 'var(--accent)' : 'var(--surface-2)' }}
-          />
-        ))}
-      </div>
+      <ActivityGauge value={value} />
       <div className="mt-2 flex justify-between text-[12px] text-faint">
         <span>тише</span>
         <span className="text-muted">{label}</span>

@@ -47,7 +47,7 @@ export function DayScreen({ date, nav }: { date: DateKey; nav: Nav }) {
         </button>
       </header>
 
-      <HeroCard model={model} plan={extra.plan} number={model.dominant.number} sign={model.dominantSign} until={card.base.next !== null ? card.base.changesAt : null} next={card.base.next} onWhy={() => setWhy(true)} />
+      <HeroCard model={model} plan={extra.plan} number={model.dominant.number} sign={model.dominantSign} until={card.base.next !== null ? card.base.changesAt : null} next={card.base.next} tone={card.tone} onWhy={() => setWhy(true)} />
       {card.base.prev !== null && card.base.changesAt && (
         <p className="-mt-1 px-1 text-[13px] text-faint">
           {model.focus === 'now'
